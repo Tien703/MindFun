@@ -1,100 +1,150 @@
 # Mindfun
 
-> Không cấm đoán — chỉ tạo khoảng dừng tỉnh thức (Mindful Pause)
+> Not a blocker — a mindful pause.
 
-Mindfun is a Windows utility that uses **Behavioral Friction** to help you control competitive gaming habits. It doesn't block games — it creates a mindful pause before you play, giving your rational mind time to weigh in.
+Mindfun is a Windows app built on **Behavioral Friction**: instead of banning games, it creates a brief, intentional pause before you play — giving your rational mind a chance to decide, not your impulse.
+
+---
 
 ## How It Works
 
-1. 🎮 **You launch a game** → Mindfun detects it within 3 seconds
-2. ⏸ **Game freezes** → `NtSuspendProcess` freezes the game (no memory hacking)
-3. 💭 **Mindful pause** → A fullscreen overlay shows a reflection question
-4. ⏱ **Countdown** → Wait 15s/60s/180s/300s depending on your commitment level
-5. ✅ **Your choice** → "I still want to play" or "Quit & do something else"
-6. 🔓 **Decision respected** → Game resumes or closes based on YOUR choice
+1. 🎮 **You launch a game** → Mindfun detects it within 3 seconds via process polling
+2. ⏸ **Game freezes instantly** → `NtSuspendProcess` suspends the entire process tree (no memory hacking, no anti-cheat flags)
+3. 💭 **Mindful overlay appears** → A fullscreen screen shows a reflection question or checklist you configured
+4. ⏱ **Countdown runs** → 15s / 1m / 3m / 5m depending on your Commitment Level
+5. ✅ **Your choice** → Press **PLAY** to resume the game, or **QUIT** to close it
+6. 📓 **All sessions logged** → Playtime and night violations are recorded locally
 
-## Modes
+---
 
-| Mode | Wait Time | For... |
-|------|-----------|--------|
-| 🟢 Reminder | 15 seconds | Good self-control |
-| 🟡 Discipline | 1 minute | Easily caught in loops |
-| 🟠 Rehab | 3 minutes | Need an emergency brake |
-| 🔴 Martial Law | 5 minutes | Night lockdown, no negotiation |
+## Commitment Levels
 
-## Night Guard (23:00–05:00)
+| Mode | Wait Time | Night Guard |
+|------|-----------|-------------|
+| 🟢 Reminder | 15 seconds | Notify only |
+| 🟡 Discipline | 1 minute | Notify only |
+| 🟠 Rehab | 3 minutes | Lockscreen Overlay |
+| 🔴 Martial Law | 5 minutes | Lockscreen Overlay + task block |
 
-- **Mode 1-3**: Silent logging — Mindfun tracks how long you play past curfew and shows a summary toast when you're done
-- **Mode 4**: Hardcore — game is killed immediately with a notification
+---
 
-## Anti-Bypass Design
+## Night Guard (Sleep Lock)
 
-Mindfun uses the **"Suspended Game Hostage"** pattern:
-- Kill Mindfun from Task Manager → game stays frozen (nobody calls resume)
-- Must kill the game too → restart triggers Mindfun again (auto-restart in 10s)
-- Bypassing is harder than just waiting through the countdown
+Monitors gaming during your configured sleep hours (default 23:00–05:00):
+
+- **Mode 1–2**: Silent logging — tracks how many minutes you played past curfew, sends a summary toast the next morning
+- **Mode 3–4**: Lockscreen overlay — covers the game with a fullscreen reminder when you launch past curfew
+- All violations are recorded in the Log tab with date, game, and duration
+
+---
+
+## Friction Lock (Anti-Cheat)
+
+An optional setting that disables the **Quit** and **Pause** buttons in the system tray icon. When enabled:
+- You cannot close Mindfun from the tray — you must open Task Manager
+- This creates just enough friction to interrupt impulsive bypass
+- Can be toggled off in Settings at any time (with a 5-second confirmation delay)
+
+---
+
+## Auto-Start
+
+After installation, Mindfun registers itself to start with Windows via two methods:
+1. **Registry Run key** — `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+2. **Startup folder** — A `.bat` shortcut in `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`
+
+---
 
 ## Tech Stack
 
-- **Python 3.11+** with **PyQt5**
-- **ctypes** → `NtSuspendProcess` / `NtResumeProcess` (no anti-cheat flags)
-- **psutil** → Process detection via polling (no hooks)
+- **Python 3.11** + **PyQt5** — UI and event loop
+- **ctypes** → `NtSuspendProcess` / `NtResumeProcess` — freeze/unfreeze game process trees
+- **psutil** → 3-second process polling (no hooks, no kernel drivers)
 - **winotify** → Windows toast notifications
-- Local-only, no network, no telemetry
+- **Inno Setup** → Windows installer
+- 100% local — zero network, zero telemetry
+
+---
+
+## Installation
+
+Download and run `MindfunSetup.exe` from the [Releases](https://github.com/Tien703/MindFun/releases) page.
+
+- No additional dependencies required
+- Mindfun starts automatically with Windows after installation
+- Settings are stored in `%APPDATA%\Mindfun\`
+
+---
 
 ## Development
 
 ```bash
-# Install dependencies
+# Clone and install dependencies
+git clone https://github.com/Tien703/MindFun.git
+cd MindFun
 pip install -r requirements.txt
 
-# Run in development mode
+# Run in dev mode
 python main.py
 
-# Run watchdog separately (for testing)
-python main.py --watchdog
+# Show settings on startup
+python main.py --settings
 ```
+
+---
 
 ## Build
 
 ```bash
-# Step 1: Build .exe with PyInstaller
-pyinstaller --onefile --noconsole --icon=assets/icon.ico main.py
+# Step 1: Package with PyInstaller
+pyinstaller --onefile --windowed --icon=assets/icon.ico --name mindfun --add-data "data;data" --add-data "assets;assets" main.py
 
 # Step 2: Build installer with Inno Setup
-# Open installer/setup.iss in Inno Setup Compiler and build
+# Run: ISCC.exe installer/setup.iss
+# Output: installer/Output/MindfunSetup.exe
 ```
+
+---
 
 ## Project Structure
 
 ```
 mindfun/
-├── main.py                       # Entry point
+├── main.py                       # Entry point (Qt app + arg parsing)
 ├── core/
-│   ├── config_manager.py         # Config loading/saving
-│   ├── game_detector.py          # 3s polling process scanner
-│   ├── i18n.py                   # Vietnamese/English strings
-│   ├── night_guard.py            # Night-time rules
-│   ├── process_controller.py     # NtSuspendProcess/NtResumeProcess
-│   └── report_logger.py          # Violation logging
+│   ├── config_manager.py         # Config/report/questions file I/O
+│   ├── game_detector.py          # 3s polling, process suspension
+│   ├── i18n.py                   # Vietnamese/English string tables
+│   ├── night_guard.py            # Sleep lock monitoring (30s interval)
+│   ├── process_controller.py     # NtSuspendProcess / NtResumeProcess
+│   └── report_logger.py          # Playtime & violation session logging
 ├── ui/
 │   ├── lockscreen.py             # Fullscreen countdown overlay
-│   ├── settings_window.py        # 4-tab settings (PyQt5)
-│   └── tray_icon.py              # System tray icon
+│   ├── settings_window.py        # 4-tab settings window (PyQt5)
+│   ├── tray_icon.py              # System tray icon & menu
+│   ├── bar_chart.py              # Playtime bar chart widget
+│   ├── game_manager_window.py    # Game list editor dialog
+│   ├── quit_popup.py             # "Are you quitting?" follow-up popup
+│   └── theme.py                  # Dark/light mode styles
 ├── service/
-│   └── startup_manager.py        # Startup registration (Registry + Startup folder)
-├── data/                         # Default data files
-├── assets/                       # Icons
-└── installer/setup.iss           # Inno Setup script
+│   └── startup_manager.py        # Registry & Startup folder registration
+├── data/                         # Default config, questions, presets
+├── assets/                       # App icon
+└── installer/setup.iss           # Inno Setup installer script
 ```
+
+---
 
 ## Privacy & Ethics
 
-- **Local-only**: Zero network activity. No analytics, no telemetry.
-- **Voluntary**: You install it because you want it. Clear uninstall via Add/Remove Programs.
-- **No memory hacking**: Only OS-level process suspend, no game memory reading/writing.
-- **Open Source**: Full source code available for community review.
+- **Local-only**: Zero network activity. No analytics, no telemetry, no accounts.
+- **Voluntary**: You install it because you want it. Uninstall cleanly via Add/Remove Programs.
+- **No memory hacking**: Only OS-level process suspend — safe with anti-cheat systems.
+- **Open Source**: Full source code available for review.
+- **No hard blocking**: You can always choose to play. The goal is awareness, not prohibition.
+
+---
 
 ## License
 
-Open Source — see LICENSE file.
+Open Source — MIT License.
