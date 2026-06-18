@@ -10,7 +10,7 @@ Mindfun is a Windows app built on **Behavioral Friction**: instead of banning ga
 
 1. 🎮 **You launch a game** → Mindfun detects it within 3 seconds via process polling
 2. ⏸ **Game freezes instantly** → `NtSuspendProcess` suspends the entire process tree (no memory hacking, no anti-cheat flags)
-3. 💭 **Mindful overlay appears** → A fullscreen screen shows a reflection question or checklist you configured
+3. 💭 **Mindful popup appears** → An always-on-top window (800×600, centered) shows a reflection question or checklist you configured
 4. ⏱ **Countdown runs** → 15s / 1m / 3m / 5m depending on your Commitment Level
 5. ✅ **Your choice** → Press **PLAY** to resume the game, or **QUIT** to close it
 6. 📓 **All sessions logged** → Playtime and night violations are recorded locally
@@ -21,10 +21,10 @@ Mindfun is a Windows app built on **Behavioral Friction**: instead of banning ga
 
 | Mode | Wait Time | Night Guard |
 |------|-----------|-------------|
-| 🟢 Reminder | 15 seconds | Toast reminder only |
-| 🟡 Discipline | 1 minute | Toast reminder only |
-| 🟠 Rehab | 3 minutes | Toast warning + log |
-| 🔴 Martial Law | 5 minutes | Toast warning + log |
+| 🟢 Reminder | 15 seconds | Toast notification |
+| 🟡 Discipline | 1 minute | Toast notification |
+| 🟠 Rehab | 3 minutes | Toast warning |
+| 🔴 Martial Law | 5 minutes | Toast warning |
 
 ---
 
@@ -32,10 +32,21 @@ Mindfun is a Windows app built on **Behavioral Friction**: instead of banning ga
 
 Monitors gaming during your configured sleep hours (default 23:00–05:00):
 
-- **Mode 1–2**: Silent tracking — logs the violation session, sends a toast reminder when the game is detected at night
-- **Mode 3–4**: Toast warning — sends a stronger toast notification immediately when you launch a game past curfew, logs the session
-- All modes: when you finally quit the game, Mindfun sends a summary toast ("you played X minutes past curfew")
+- **All modes**: When a game is detected at night, sends a toast notification immediately
+- **Mode 3–4**: Sends a stronger warning toast
+- **On game exit**: Sends a summary toast ("you played X minutes past curfew")
 - All violations are recorded in the Log tab with date, game, and duration
+
+---
+
+## Mindful Popup
+
+The pause window is an **always-on-top floating panel** (800×600, centered on screen) — not a fullscreen cover. It:
+- Uses `Qt.WindowStaysOnTopHint` and re-asserts `HWND_TOPMOST` every 500ms so it stays above the game
+- Intercepts Alt+F4 via `WM_SYSCOMMAND` to prevent closing during countdown
+- Disables PLAY/QUIT buttons until the countdown finishes
+- Can be dragged to reposition
+- Shows checklist tasks or random reflection questions from your configured groups
 
 ---
 
@@ -120,7 +131,7 @@ mindfun/
 │   ├── process_controller.py     # NtSuspendProcess / NtResumeProcess
 │   └── report_logger.py          # Playtime & violation session logging
 ├── ui/
-│   ├── lockscreen.py             # Fullscreen countdown overlay
+│   ├── lockscreen.py             # Always-on-top pause popup (800×600)
 │   ├── settings_window.py        # 4-tab settings window (PyQt5)
 │   ├── tray_icon.py              # System tray icon & menu
 │   ├── bar_chart.py              # Playtime bar chart widget
