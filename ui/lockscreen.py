@@ -115,7 +115,7 @@ class LockScreen(QWidget):
         self._setup_timers()
 
         # Overlay without suspending
-        logger.info("LockScreen: overlying %s (PID %d)", game_exe, game_pid)
+        logger.info("LockScreen: overlying %s (PID %d), _WIN_API: %s", game_exe, game_pid, _WIN_API)
 
     def _load_questions_and_tasks(self, config: dict) -> tuple[str, list]:
         """Load all tasks from enabled checklist groups (no random questions)."""
@@ -503,12 +503,16 @@ class LockScreen(QWidget):
 
     def _minimize_game_windows(self):
         """Minimize the game window during countdown to prevent fullscreen bypass."""
+        logger.info("Minimizing game windows. _WIN_API: %s", _WIN_API)
         if not _WIN_API:
             return
         try:
             hwnds = self._get_game_hwnds()
+            logger.info("Found %d game window handles for PID %d", len(hwnds), self._game_pid)
             for hwnd in hwnds:
-                ShowWindow(hwnd, SW_MINIMIZE)
+                res = ShowWindow(hwnd, SW_MINIMIZE)
+                err = ctypes.windll.kernel32.GetLastError()
+                logger.info("ShowWindow(hwnd=%s, SW_MINIMIZE) returned: %s, LastError: %s", hwnd, res, err)
         except Exception as e:
             logger.error("Error minimizing game windows: %s", e)
 

@@ -169,6 +169,15 @@ class MindfunApp:
     def _show_lockscreen(self, game_exe: str, game_pid: int,
                          launcher_exe: Optional[str], launcher_pid: Optional[int]):
         """Create and show the lockscreen (runs on Qt main thread)."""
+        # Clean up any closed windows to avoid memory leak
+        self._active_lockscreens = [w for w in self._active_lockscreens if w.isVisible()]
+
+        # Prevent duplicate lockscreens if one is already showing
+        from ui.lockscreen import LockScreen
+        if any(isinstance(w, LockScreen) for w in self._active_lockscreens):
+            logger.info("Lockscreen already visible. Skipping duplicate spawn for %s (PID %d)", game_exe, game_pid)
+            return
+
         config = load_config()
         from core.night_guard import is_night_time
         
