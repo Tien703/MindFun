@@ -1,0 +1,44 @@
+{
+  "task_groups": {
+    "vi": [
+      {
+        "id": "default_vi_study",
+        "name": "🟢 Học tập & Công việc",
+        "enabled": true,
+        "is_checklist": false,
+        "items": [
+          { "id": "vi_s_1", "text": "Bạn đã hoàn thành công việc quan trọng nhất trong ngày hôm nay chưa?", "done": false }
+        ]
+      },
+      {
+        "id": "default_vi_health",
+        "name": "🔵 Sức khỏe & Thể chất",
+        "enabled": true,
+        "is_checklist": false,
+        "items": [
+          { "id": "vi_h_1", "text": "Bạn đã ăn uống đầy đủ và vận động đủ cho ngày hôm nay chưa?", "done": false }
+        ]
+      }
+    ],
+    "en": [
+      {
+        "id": "default_en_study",
+        "name": "🟢 Study & Work",
+        "enabled": true,
+        "is_checklist": false,
+        "items": [
+          { "id": "en_s_1", "text": "Have you finished your most important task for today?", "done": false }
+        ]
+      },
+      {
+        "id": "default_en_health",
+        "name": "🔵 Health & Fitness",
+        "enabled": true,
+        "is_checklist": false,
+        "items": [
+          { "id": "en_h_1", "text": "Have you eaten properly and exercised enough today?", "done": false }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "mode": 2,
+  "day_start": "05:00",
+  "night_start": "23:00",
+  "language": "en",
+  "game_list": [
+    "LeagueOfLegends.exe",
+    "VALORANT-Win64-Shipping.exe",
+    "cs2.exe",
+    "RainbowSix.exe",
+    "Overwatch.exe",
+    "dota2.exe"
+  ]
+}
