@@ -2,8 +2,8 @@
 Mindfun — Game Detector
 
 Polls running processes every 3 seconds and detects games from the configured list.
-When a new game is detected (not yet whitelisted), it triggers the Soft Mode handler
-which suspends the game and shows the lockscreen.
+When a new game is detected (not yet whitelisted), it triggers the callback which
+shows the lockscreen popup.
 
 Design notes:
 - Uses psutil.process_iter() for safe, low-overhead process enumeration

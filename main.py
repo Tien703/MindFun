@@ -7,11 +7,10 @@ Orchestrates all components:
 - System tray icon
 - Lockscreen popup (on game detection)
 - Settings window
-- Watchdog (mutual guardian)
 
 Usage:
     python main.py              → Run main app (tray + detection)
-    python main.py --watchdog   → Run watchdog process only
+    python main.py --settings   → Open settings on startup
 """
 
 import sys
@@ -30,7 +29,6 @@ from core.config_manager import load_config
 from core.i18n import set_language
 from core.game_detector import GameDetector
 from core.night_guard import NightGuard
-from core.process_controller import suspend_process_tree, resume_process_tree
 from service.startup_manager import register_all_startup
 
 # ─── Logging Setup ───────────────────────────────────────────────────

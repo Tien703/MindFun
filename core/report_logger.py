@@ -12,8 +12,6 @@ from core.config_manager import load_report, save_report
 
 logger = logging.getLogger("mindfun.report_logger")
 
-logger = logging.getLogger("mindfun.report_logger")
-
 def _ensure_daily_stats(report: dict, date_str: str):
     """Ensure daily stats dict exists for the given date."""
     if "daily_stats" not in report:
@@ -133,8 +131,3 @@ def get_all_sessions() -> list[dict]:
     """Get all sessions for display in the settings UI log tab."""
     return load_report().get("sessions", [])
 
-
-def clear_all_sessions():
-    """Clear all sessions from the report."""
-    save_report({"sessions": []})
-    logger.info("Cleared all report sessions")
