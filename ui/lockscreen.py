@@ -43,6 +43,18 @@ try:
     SWP_NOMOVE = 0x0002
     SWP_NOSIZE = 0x0001
     SWP_NOACTIVATE = 0x0010
+    
+    # Constants for window minimization
+    SW_MINIMIZE = 6
+    SW_RESTORE = 9
+    
+    EnumWindows = _user32.EnumWindows
+    EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+    GetWindowThreadProcessId = _user32.GetWindowThreadProcessId
+    IsWindowVisible = _user32.IsWindowVisible
+    ShowWindow = _user32.ShowWindow
+    SetForegroundWindow = _user32.SetForegroundWindow
+    
     _WIN_API = True
 except (OSError, AttributeError):
     _WIN_API = False
@@ -469,6 +481,49 @@ class LockScreen(QWidget):
             
             self._progress.setValue(self._remaining)
 
+    def _get_game_hwnds(self) -> list:
+        """Find all visible window handles for the game process PID."""
+        hwnds = []
+        if not _WIN_API:
+            return hwnds
+        try:
+            def callback(hwnd, extra):
+                window_pid = ctypes.c_ulong()
+                GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
+                if window_pid.value == self._game_pid and IsWindowVisible(hwnd):
+                    hwnds.append(hwnd)
+                return True
+            
+            # Store cb_func reference to avoid garbage collection crash
+            self._cb_func = EnumWindowsProc(callback)
+            EnumWindows(self._cb_func, 0)
+        except Exception as e:
+            logger.error("Error enumerating windows: %s", e)
+        return hwnds
+
+    def _minimize_game_windows(self):
+        """Minimize the game window during countdown to prevent fullscreen bypass."""
+        if not _WIN_API:
+            return
+        try:
+            hwnds = self._get_game_hwnds()
+            for hwnd in hwnds:
+                ShowWindow(hwnd, SW_MINIMIZE)
+        except Exception as e:
+            logger.error("Error minimizing game windows: %s", e)
+
+    def _restore_game_windows(self):
+        """Restore the game window and focus it."""
+        if not _WIN_API:
+            return
+        try:
+            hwnds = self._get_game_hwnds()
+            for hwnd in hwnds:
+                ShowWindow(hwnd, SW_RESTORE)
+                SetForegroundWindow(hwnd)
+        except Exception as e:
+            logger.error("Error restoring game windows: %s", e)
+
     def _enforce_topmost(self):
         """Re-assert HWND_TOPMOST position to prevent Alt+Tab escaping."""
         if _WIN_API:
@@ -477,6 +532,10 @@ class LockScreen(QWidget):
                 hwnd, HWND_TOPMOST, 0, 0, 0, 0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
             )
+            
+            # Minimize game window during countdown to solve fullscreen issues
+            if self._countdown_active:
+                self._minimize_game_windows()
 
     def _handle_next(self):
         """Go to the next group."""
@@ -510,7 +569,8 @@ class LockScreen(QWidget):
         self._countdown_timer.stop()
         self._topmost_timer.stop()
 
-        # (Game was never suspended, just hide the lockscreen)
+        # Restore the game window so the user can play
+        self._restore_game_windows()
 
         if self._on_play:
             self._on_play(self._game_exe, self._game_pid)
@@ -524,7 +584,8 @@ class LockScreen(QWidget):
         self._countdown_timer.stop()
         self._topmost_timer.stop()
 
-        # (Game was never suspended, just hide the lockscreen)
+        # Restore the game window so they can exit it
+        self._restore_game_windows()
 
         if self._on_quit:
             self._on_quit(self._game_exe, self._game_pid)
