@@ -21,10 +21,10 @@ Mindfun is a Windows app built on **Behavioral Friction**: instead of banning ga
 
 | Mode | Wait Time | Night Guard |
 |------|-----------|-------------|
-| 🟢 Reminder | 15 seconds | Notify only |
-| 🟡 Discipline | 1 minute | Notify only |
-| 🟠 Rehab | 3 minutes | Lockscreen Overlay |
-| 🔴 Martial Law | 5 minutes | Lockscreen Overlay + task block |
+| 🟢 Reminder | 15 seconds | Toast reminder only |
+| 🟡 Discipline | 1 minute | Toast reminder only |
+| 🟠 Rehab | 3 minutes | Toast warning + log |
+| 🔴 Martial Law | 5 minutes | Toast warning + log |
 
 ---
 
@@ -32,8 +32,9 @@ Mindfun is a Windows app built on **Behavioral Friction**: instead of banning ga
 
 Monitors gaming during your configured sleep hours (default 23:00–05:00):
 
-- **Mode 1–2**: Silent logging — tracks how many minutes you played past curfew, sends a summary toast the next morning
-- **Mode 3–4**: Lockscreen overlay — covers the game with a fullscreen reminder when you launch past curfew
+- **Mode 1–2**: Silent tracking — logs the violation session, sends a toast reminder when the game is detected at night
+- **Mode 3–4**: Toast warning — sends a stronger toast notification immediately when you launch a game past curfew, logs the session
+- All modes: when you finally quit the game, Mindfun sends a summary toast ("you played X minutes past curfew")
 - All violations are recorded in the Log tab with date, game, and duration
 
 ---
