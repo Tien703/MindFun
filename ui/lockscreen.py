@@ -73,6 +73,8 @@ class LockScreen(QWidget):
         launcher_pid: Optional[int] = None,
         on_play: Optional[callable] = None,
         on_quit: Optional[callable] = None,
+        is_sleep_lock: bool = False,
+        is_soft_sleep_lock: bool = False,
         parent=None,
     ):
         super().__init__(parent)
@@ -82,6 +84,8 @@ class LockScreen(QWidget):
         self._launcher_pid = launcher_pid
         self._on_play = on_play
         self._on_quit = on_quit
+        self._is_sleep_lock = is_sleep_lock
+        self._is_soft_sleep_lock = is_soft_sleep_lock
 
         # Load mode duration
         config = load_config()
@@ -92,8 +96,12 @@ class LockScreen(QWidget):
         self._is_closing = False
         self._drag_pos = None
 
-        # Load tasks grouped by category
-        _, self._checklist_groups = self._load_questions_and_tasks(config)
+        if self._is_sleep_lock:
+            self._checklist_groups = []
+        else:
+            # Load tasks grouped by category
+            _, self._checklist_groups = self._load_questions_and_tasks(config)
+            
         self._current_group_index = 0
         
         n = len(self._checklist_groups)
@@ -108,6 +116,10 @@ class LockScreen(QWidget):
                 
         self._remaining = self._group_times[self._current_group_index]
         self._countdown_active = (self._remaining > 0)
+        
+        if self._is_sleep_lock and not self._is_soft_sleep_lock:
+            self._remaining = 0
+            self._countdown_active = False
 
         # Setup window
         self._setup_window()
@@ -192,7 +204,16 @@ class LockScreen(QWidget):
         # ── Game name label ──
         from core.config_manager import get_game_name
         friendly_name = get_game_name(self._game_exe)
-        self._game_label = QLabel(t("game_paused", game=friendly_name))
+        
+        if self._is_sleep_lock:
+            if self._is_soft_sleep_lock:
+                self._game_label = QLabel(t("soft_sleep_lock_warning", game=friendly_name))
+            else:
+                self._game_label = QLabel(t("sleep_lock_warning", game=friendly_name))
+            self._game_label.setStyleSheet("color: #ed8796; font-size: 24px; font-weight: bold;")
+        else:
+            self._game_label = QLabel(t("game_paused", game=friendly_name))
+            
         self._game_label.setAlignment(Qt.AlignCenter)
         self._game_label.setObjectName("game_label")
         content_layout.addWidget(self._game_label)
@@ -210,21 +231,29 @@ class LockScreen(QWidget):
         self._progress.setTextVisible(False)
         self._progress.setFixedHeight(8)
         self._progress.setObjectName("countdown_progress")
+        if self._is_sleep_lock:
+            self._progress.hide()
         content_layout.addWidget(self._progress)
         content_layout.addSpacing(16)
 
         # ── Countdown text ──
-        self._countdown_label = QLabel(t("seconds_remaining", seconds=self._remaining))
+        self._countdown_label = QLabel()
         self._countdown_label.setAlignment(Qt.AlignCenter)
         self._countdown_label.setObjectName("countdown_label")
+        pal = theme.get_settings_palette(load_config().get("dark_mode", True))
+        self._countdown_label.setStyleSheet(f"color: {pal['desc_color']}; font-size: 16px; font-weight: bold;")
+        if self._is_sleep_lock and not self._is_soft_sleep_lock:
+            self._countdown_label.hide()
         content_layout.addWidget(self._countdown_label)
-        content_layout.addSpacing(20)
+        content_layout.addSpacing(30)
 
         # ── Fixed Mindful Breathing Reminder ──
         self._breathe_label = QLabel("🧘 " + t("waiting_prompt"))
         self._breathe_label.setAlignment(Qt.AlignCenter)
         pal = theme.get_settings_palette(load_config().get("dark_mode", True))
         self._breathe_label.setStyleSheet(f"color: {pal['desc_color']}; font-size: 20px; font-style: italic; font-weight: bold; font-family: 'Segoe UI', sans-serif;")
+        if self._is_sleep_lock:
+            self._breathe_label.hide()
         content_layout.addWidget(self._breathe_label)
         content_layout.addSpacing(40)
 
@@ -274,10 +303,19 @@ class LockScreen(QWidget):
             lbl = QLabel(t("waiting_prompt"))
             lbl.setAlignment(Qt.AlignCenter)
             lbl.setObjectName("question_label")
+            if self._is_sleep_lock:
+                lbl.hide()
             content_layout.addWidget(lbl)
             content_layout.addSpacing(60)
 
         # ── Action buttons ──
+        self._warning_label = QLabel(t("unfinished_tasks_ask"))
+        self._warning_label.setAlignment(Qt.AlignCenter)
+        self._warning_label.setStyleSheet("color: #ed8796; font-size: 16px; font-weight: bold; font-style: italic;")
+        self._warning_label.hide()
+        content_layout.addWidget(self._warning_label)
+        content_layout.addSpacing(10)
+
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(30)
 
@@ -313,6 +351,18 @@ class LockScreen(QWidget):
             self._btn_play.hide()
         else:
             self._btn_next.hide()
+            
+        if self._is_sleep_lock:
+            if self._is_soft_sleep_lock:
+                self._btn_next.hide()
+                self._warning_label.hide()
+                # Play button is controlled by the countdown timer now
+                self._btn_play.setEnabled(not self._countdown_active)
+                self._btn_play.show()
+            else:
+                self._btn_play.hide()
+                self._btn_next.hide()
+                self._warning_label.hide()
 
         btn_layout.addStretch()
         btn_layout.addWidget(self._btn_quit)
@@ -398,6 +448,15 @@ class LockScreen(QWidget):
                         
         self._update_play_button()
 
+    def _has_unfinished_tasks(self) -> bool:
+        """Check if any checklist items are not done."""
+        for group in self._checklist_groups:
+            if group["type"] == "checklist":
+                for _, _, _, is_done in group["items"]:
+                    if not is_done:
+                        return True
+        return False
+
     def _check_strict_block(self) -> bool:
         """Check if playing should be blocked based on mode 4 and unfinished tasks."""
         if self._mode != 4:
@@ -413,11 +472,17 @@ class LockScreen(QWidget):
     def _update_play_button(self):
         """Update play button state based on strict block."""
         is_blocked = self._check_strict_block()
+        has_unfinished = self._has_unfinished_tasks()
         
         n = len(self._checklist_groups)
         on_last_screen = (self._current_group_index == n - 1) if n > 0 else True
         can_play_time = on_last_screen and not self._countdown_active
         
+        if has_unfinished and can_play_time:
+            self._warning_label.show()
+        else:
+            self._warning_label.hide()
+            
         if is_blocked:
             self._btn_play.setEnabled(False)
             self._btn_play.setText("HOÀN THÀNH NHIỆM VỤ ĐỂ CHƠI")
@@ -561,7 +626,7 @@ class LockScreen(QWidget):
             )
             
             # Minimize game window during countdown to solve fullscreen issues
-            if self._countdown_active:
+            if self._countdown_active or getattr(self, "_is_sleep_lock", False):
                 self._minimize_game_windows()
 
     def _handle_next(self):

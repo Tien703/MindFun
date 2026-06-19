@@ -44,7 +44,7 @@ class QuitPopup(QWidget):
         self._game_pid = game_pid
         self._on_closed = on_closed
         self._is_closing = False
-        self._minimize_counter = 0
+        self._minimize_counter = 1
 
         self._setup_window()
         self._setup_ui()

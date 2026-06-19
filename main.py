@@ -23,7 +23,7 @@ from typing import Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QTimer, QMetaObject, Qt, Q_ARG, QObject, pyqtSignal, QSharedMemory
+from PyQt5.QtCore import QTimer, QMetaObject, Qt, Q_ARG, QObject, pyqtSignal, QSharedMemory, pyqtSlot
 
 from core.config_manager import load_config
 from core.i18n import set_language
@@ -112,6 +112,10 @@ class MindfunApp(QObject):
         self._night_guard = NightGuard(
             on_whitelist_reset=self._on_whitelist_reset,
             on_toast=self._show_toast,
+            on_night_lockdown=lambda exe, pid, is_soft: QMetaObject.invokeMethod(
+                self, "_show_sleep_lockscreen", Qt.QueuedConnection,
+                Q_ARG(str, exe), Q_ARG(int, pid), Q_ARG(bool, is_soft)
+            ),
         )
 
         if show_settings:
@@ -167,6 +171,26 @@ class MindfunApp(QObject):
         logger.info("Game detected: %s (PID %d)", game_exe, game_pid)
         self._signals.game_detected.emit(game_exe, game_pid, launcher_exe, launcher_pid)
 
+    @pyqtSlot(str, int, bool)
+    def _show_sleep_lockscreen(self, game_exe: str, game_pid: int, is_soft: bool = False):
+        """Create and show the strict sleep lockscreen."""
+        # Check if already showing
+        self._active_lockscreens = [w for w in self._active_lockscreens if w.isVisible()]
+        for w in self._active_lockscreens:
+            if type(w).__name__ == "LockScreen" and getattr(w, "_is_sleep_lock", False):
+                return
+                
+        lockscreen = self._LockScreen(
+            game_exe=game_exe,
+            game_pid=game_pid,
+            on_play=self._on_user_play,
+            on_quit=self._on_user_quit,
+            is_sleep_lock=True,
+            is_soft_sleep_lock=is_soft
+        )
+        self._active_lockscreens.append(lockscreen)
+        lockscreen.show()
+
     def _show_lockscreen(self, game_exe: str, game_pid: int,
                          launcher_exe: Optional[str], launcher_pid: Optional[int]):
         """Create and show the lockscreen (runs on Qt main thread)."""
@@ -185,22 +209,28 @@ class MindfunApp(QObject):
         from core.night_guard import is_night_time
         
         # Check night block before showing lockscreen
-        if is_night_time() and config.get("mode", 2) >= 3:
-            # Instead of killing, we just show the lockscreen and log violation
-            logger.info("HARDCORE: Overlaying new launch %s during night hours", game_exe)
-            from core import report_logger
-            from core.i18n import t
+        if is_night_time():
+            if config.get("mode", 2) >= 3:
+                # Instead of killing, we just show the lockscreen and log violation
+                logger.info("HARDCORE: Overlaying new launch %s during night hours", game_exe)
+                from core import report_logger
+                from core.i18n import t
+                    
+                # Log violation
+                session_index = report_logger.start_session(game_exe, config.get("night_start", "23:00"))
+                report_logger.mark_force_killed(session_index)
+                report_logger.mark_notified(session_index)
                 
-            # Log violation
-            session_index = report_logger.start_session(game_exe, config.get("night_start", "23:00"))
-            report_logger.mark_force_killed(session_index)
-            report_logger.mark_notified(session_index)
-            
-            # Show popup
-            from datetime import datetime
-            now_str = datetime.now().strftime("%H:%M")
-            self._show_toast(t("toast_title"), t("toast_hardcore_kill", time=now_str))
-            
+                # Show popup
+                from datetime import datetime
+                now_str = datetime.now().strftime("%H:%M")
+                self._show_toast(t("toast_title"), t("toast_hardcore_kill", time=now_str))
+                self._show_sleep_lockscreen(game_exe, game_pid, is_soft=False)
+                return
+            else:
+                logger.info("SOFT: Overlaying soft sleep lock for %s during night hours", game_exe)
+                self._show_sleep_lockscreen(game_exe, game_pid, is_soft=True)
+                return
 
         # Normal lockscreen behavior
         lockscreen = self._LockScreen(

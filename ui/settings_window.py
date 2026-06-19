@@ -62,6 +62,21 @@ class SettingsWindow(QWidget):
 
         self._build_ui()
         self._apply_dynamic_colors(load_config().get("dark_mode", True))
+        
+        # Setup auto-refresh for real-time chart updates
+        self._auto_refresh_timer = QTimer(self)
+        self._auto_refresh_timer.timeout.connect(self._on_auto_refresh)
+        self._auto_refresh_timer.start(3000)
+
+    def _on_auto_refresh(self):
+        """Automatically refresh chart if log tab is visible."""
+        if self.isVisible() and self._tabs.currentIndex() == 2:
+            self._refresh_log_chart()
+
+    def showEvent(self, event):
+        """Refresh all data when the settings window is shown."""
+        super().showEvent(event)
+        self.refresh_all()
 
     def _build_ui(self):
         """Build the complete settings UI."""
@@ -678,7 +693,7 @@ class SettingsWindow(QWidget):
 
     def show_log_tab(self):
         """Switch to the log tab and refresh data."""
-        self._tabs.setCurrentIndex(3)
+        self._tabs.setCurrentIndex(2)
         self._refresh_log_chart()
         self.show()
         self.raise_()

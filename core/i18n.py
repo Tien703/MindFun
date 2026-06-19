@@ -11,10 +11,12 @@ STRINGS = {
         "game_paused": "Paused: {game}",
         "seconds_remaining": "Wait {seconds}s",
         "unfinished_tasks_prompt": "Pending Tasks:",
-        "unfinished_tasks_ask": "Play anyway?",
+        "unfinished_tasks_ask": "Bạn vẫn còn công việc chưa xong. Bạn có tiếp tục chơi không?",
+        "sleep_lock_warning": "Đã quá giờ đi ngủ. Hãy tắt {game} để bảo vệ sức khỏe!",
+        "soft_sleep_lock_warning": "Đã đến giờ đi ngủ. Bạn có chắc chắn muốn tiếp tục chơi {game}?",
         "btn_quit": "QUIT",
         "btn_play": "PLAY",
-        "waiting_prompt": "Breathe.",
+        "waiting_prompt": "Hãy chậm lại và hít thở",
 
         # Tray
         "tray_tooltip": "Mindfun đang bảo vệ bạn",
@@ -27,7 +29,7 @@ STRINGS = {
         "tray_pause_today": "Tạm dừng hôm nay",
         "tray_resume": "Bật lại Bảo Vệ",
         "tray_quit": "Thoát Mindfun",
-        "tray_reset_whitelist": "Khóa lại Game (Xóa lịch sử chơi)",
+        "tray_reset_whitelist": "Xóa lịch sử cho phép",
         "tray_about": "Giới thiệu",
 
         # Settings tabs
@@ -120,9 +122,9 @@ STRINGS = {
 
 
         # Night guard toasts
-        "toast_night_report": "Báo cáo: Đêm qua bạn đã thức khuya chơi {game} khoảng {minutes} phút. Chú ý giữ gìn sức khỏe nhé!",
+        "toast_night_report": "Báo cáo: Vừa rồi bạn đã thức muộn chơi {game} khoảng {minutes} phút. Hãy chú ý giữ gìn sức khỏe nhé!",
         "toast_night_remind": "Bạn đang chơi game trong giờ đi ngủ. Hệ thống sẽ ghi lại vi phạm này để nhắc nhở!",
-        "toast_hardcore_kill": "⚠️ Mindfun đã khóa màn hình game của bạn. Đã qua {time}.\nHãy tắt máy và đi ngủ ngay bây giờ.",
+        "toast_hardcore_kill": "⚠️ Mindfun đã khóa màn hình game của bạn. Đã qua {time}.\nHãy tắt máy và đi ngủ.",
         "toast_title": "Mindfun",
 
         # About
@@ -150,10 +152,12 @@ STRINGS = {
         "game_paused": "Paused: {game}",
         "seconds_remaining": "Wait {seconds}s",
         "unfinished_tasks_prompt": "Pending Tasks:",
-        "unfinished_tasks_ask": "Play anyway?",
+        "unfinished_tasks_ask": "You have unfinished tasks. Do you still want to play?",
+        "sleep_lock_warning": "It's past your bedtime. Please close {game} and go to sleep!",
+        "soft_sleep_lock_warning": "It's past your bedtime. Are you sure you want to continue playing {game}?",
         "btn_quit": "QUIT",
         "btn_play": "PLAY",
-        "waiting_prompt": "Breathe.",
+        "waiting_prompt": "Take a moment to slow down.",
 
         # Tray
         "tray_tooltip": "Mindfun is protecting you",

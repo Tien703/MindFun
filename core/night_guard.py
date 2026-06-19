@@ -56,14 +56,17 @@ class NightGuard:
         self,
         on_whitelist_reset: Callable[[], None],
         on_toast: Callable[[str, str], None],
+        on_night_lockdown: Optional[Callable[[str, int, bool], None]] = None,
     ):
         """
         Args:
             on_whitelist_reset: Callback to reset the game detector's whitelist at 05:00.
             on_toast: Callback to show a toast notification. Signature: (title, message).
+            on_night_lockdown: Callback to show the sleep lockscreen. Signature: (game_exe, pid).
         """
         self._on_whitelist_reset = on_whitelist_reset
         self._on_toast = on_toast
+        self._on_night_lockdown = on_night_lockdown
         self._running = False
         self._thread: Optional[threading.Thread] = None
 
@@ -148,7 +151,7 @@ class NightGuard:
                     # New night violation detected
                     if mode >= 3:
                         # Hardcore: formerly killed, now we just notify and let detector overlay Lockscreen
-                        logger.info("HARDCORE: Night violation %s (PID %d). Letting detector show Lockscreen.", game_lower, pid)
+                        logger.info("HARDCORE: Night violation %s (PID %d). Spawning Sleep Lockscreen.", game_lower, pid)
                         session_index = report_logger.start_session(game_lower, night_start)
                         report_logger.mark_notified(session_index)
 
@@ -157,19 +160,26 @@ class NightGuard:
                             t("toast_title"),
                             t("toast_hardcore_kill", time=now_str),
                         )
+                        
+                        if self._on_night_lockdown:
+                            self._on_night_lockdown(game_lower, pid, False)
                     else:
                         # Mode 1-2: Silent report + Toast remind
                         logger.info("Night violation: %s (PID %d), mode %d — silent tracking", game_lower, pid, mode)
                         session_index = report_logger.start_session(game_lower, night_start)
-                        self._active_sessions[game_lower] = {
-                            "pid": pid,
-                            "session_index": session_index,
-                            "last_minute_update": time.time(),
-                        }
                         self._on_toast(
                             t("toast_title"),
                             t("toast_night_remind")
                         )
+                        if self._on_night_lockdown:
+                            self._on_night_lockdown(game_lower, pid, True)
+
+                    # Track the session to prevent repeated triggers
+                    self._active_sessions[game_lower] = {
+                        "pid": pid,
+                        "session_index": session_index,
+                        "last_minute_update": time.time(),
+                    }
 
         # Check if any tracked games have exited
         self._cleanup_ended_sessions()
