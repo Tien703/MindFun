@@ -54,10 +54,11 @@ class AppSignals(QObject):
 
 # ─── Application Class ──────────────────────────────────────────────
 
-class MindfunApp:
+class MindfunApp(QObject):
     """Main application controller."""
 
     def __init__(self, show_settings=False):
+        super().__init__()
         self._app = QApplication(sys.argv)
         self._app.setQuitOnLastWindowClosed(False)  # Keep running with just the tray
 
@@ -173,10 +174,12 @@ class MindfunApp:
         self._active_lockscreens = [w for w in self._active_lockscreens if w.isVisible()]
 
         # Prevent duplicate lockscreens if one is already showing
-        from ui.lockscreen import LockScreen
-        if any(isinstance(w, LockScreen) for w in self._active_lockscreens):
-            logger.info("Lockscreen already visible. Skipping duplicate spawn for %s (PID %d)", game_exe, game_pid)
-            return
+        for w in self._active_lockscreens:
+            if type(w).__name__ == "LockScreen":
+                logger.info("Lockscreen already visible. Skipping duplicate spawn for %s (PID %d)", game_exe, game_pid)
+                # Remove this PID from active so it can be detected again when current lockscreen finishes
+                self._detector.remove_active_pid(game_pid)
+                return
 
         config = load_config()
         from core.night_guard import is_night_time

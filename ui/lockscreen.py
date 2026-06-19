@@ -453,6 +453,29 @@ class LockScreen(QWidget):
         self._topmost_timer.timeout.connect(self._enforce_topmost)
         self._topmost_timer.start(500)
 
+        # Process monitor timer: fires every 2000ms
+        self._process_timer = QTimer(self)
+        self._process_timer.timeout.connect(self._check_process_alive)
+        self._process_timer.start(2000)
+
+    def _check_process_alive(self):
+        """Check if the game process is still running; close if it died."""
+        import psutil
+        try:
+            if not psutil.pid_exists(self._game_pid):
+                logger.info("Game process %d no longer exists. Closing LockScreen.", self._game_pid)
+                self._countdown_timer.stop()
+                self._topmost_timer.stop()
+                self._process_timer.stop()
+                self._is_closing = True
+                
+                # Let the detector know this PID is gone, just in case
+                from main import MindfunApp
+                
+                self.close()
+        except Exception as e:
+            logger.error("Error checking process alive: %s", e)
+
     def _tick(self):
         """Update countdown and check state."""
         # Topmost enforcement
