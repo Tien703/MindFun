@@ -179,6 +179,8 @@ class MindfunApp(QObject):
         for w in self._active_lockscreens:
             if type(w).__name__ == "LockScreen" and getattr(w, "_is_sleep_lock", False):
                 return
+            if type(w).__name__ == "QuitPopup" and getattr(w, "_game_exe", "").lower() == game_exe.lower():
+                return
                 
         lockscreen = self._LockScreen(
             game_exe=game_exe,
@@ -198,10 +200,15 @@ class MindfunApp(QObject):
         self._active_lockscreens = [w for w in self._active_lockscreens if w.isVisible()]
 
         # Prevent duplicate lockscreens if one is already showing
+        logger.info("_active_lockscreens: %s", [type(w).__name__ for w in self._active_lockscreens])
         for w in self._active_lockscreens:
             if type(w).__name__ == "LockScreen":
                 logger.info("Lockscreen already visible. Skipping duplicate spawn for %s (PID %d)", game_exe, game_pid)
                 # Remove this PID from active so it can be detected again when current lockscreen finishes
+                self._detector.remove_active_pid(game_pid)
+                return
+            if type(w).__name__ == "QuitPopup" and getattr(w, "_game_exe", "").lower() == game_exe.lower():
+                # Quit popup is already telling them to quit this game
                 self._detector.remove_active_pid(game_pid)
                 return
 

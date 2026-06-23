@@ -108,10 +108,20 @@ class QuitPopup(QWidget):
         layout.addWidget(label)
 
     def _check_pid(self):
-        """Check if the game process is still running."""
+        """Check if any game process matching _game_exe is still running."""
         try:
-            if not psutil.pid_exists(self._game_pid):
-                logger.info("Process %d no longer exists. Closing popup.", self._game_pid)
+            import psutil
+            any_alive = False
+            for p in psutil.process_iter(['name', 'pid']):
+                try:
+                    if p.info['name'] and p.info['name'].lower() == self._game_exe.lower():
+                        any_alive = True
+                        break
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    pass
+                    
+            if not any_alive:
+                logger.info("No processes found for %s. Closing popup.", self._game_exe)
                 self._finish_and_close()
             else:
                 # Minimize game every 10 seconds (0s, 10s, 20s...)
@@ -123,15 +133,24 @@ class QuitPopup(QWidget):
             self._finish_and_close()
             
     def _get_game_hwnds(self) -> list:
-        """Find all visible window handles for the game process PID."""
+        """Find all visible window handles for all processes matching game_exe."""
         hwnds = []
         if not _WIN_API:
             return hwnds
         try:
+            import psutil
+            target_pids = set()
+            for p in psutil.process_iter(['name', 'pid']):
+                try:
+                    if p.info['name'] and p.info['name'].lower() == self._game_exe.lower():
+                        target_pids.add(p.info['pid'])
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    pass
+                    
             def callback(hwnd, extra):
                 window_pid = ctypes.c_ulong()
                 GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
-                if window_pid.value == self._game_pid and IsWindowVisible(hwnd):
+                if window_pid.value in target_pids and IsWindowVisible(hwnd):
                     hwnds.append(hwnd)
                 return True
             

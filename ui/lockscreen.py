@@ -52,6 +52,7 @@ try:
     EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
     GetWindowThreadProcessId = _user32.GetWindowThreadProcessId
     IsWindowVisible = _user32.IsWindowVisible
+    IsIconic = _user32.IsIconic
     ShowWindow = _user32.ShowWindow
     SetForegroundWindow = _user32.SetForegroundWindow
     
@@ -122,6 +123,7 @@ class LockScreen(QWidget):
             self._countdown_active = False
 
         # Setup window
+        self._minimize_counter = 1
         self._setup_window()
         self._setup_ui()
         self._setup_timers()
@@ -524,11 +526,20 @@ class LockScreen(QWidget):
         self._process_timer.start(2000)
 
     def _check_process_alive(self):
-        """Check if the game process is still running; close if it died."""
-        import psutil
+        """Check if any game process matching _game_exe is still running; close if it died."""
         try:
-            if not psutil.pid_exists(self._game_pid):
-                logger.info("Game process %d no longer exists. Closing LockScreen.", self._game_pid)
+            import psutil
+            any_alive = False
+            for p in psutil.process_iter(['name', 'pid']):
+                try:
+                    if p.info['name'] and p.info['name'].lower() == self._game_exe.lower():
+                        any_alive = True
+                        break
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    pass
+                    
+            if not any_alive:
+                logger.info("No processes found for %s. Closing LockScreen.", self._game_exe)
                 self._countdown_timer.stop()
                 self._topmost_timer.stop()
                 self._process_timer.stop()
@@ -570,15 +581,24 @@ class LockScreen(QWidget):
             self._progress.setValue(self._remaining)
 
     def _get_game_hwnds(self) -> list:
-        """Find all visible window handles for the game process PID."""
+        """Find all visible window handles for all processes matching game_exe."""
         hwnds = []
         if not _WIN_API:
             return hwnds
         try:
+            import psutil
+            target_pids = set()
+            for p in psutil.process_iter(['name', 'pid']):
+                try:
+                    if p.info['name'] and p.info['name'].lower() == self._game_exe.lower():
+                        target_pids.add(p.info['pid'])
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    pass
+                    
             def callback(hwnd, extra):
                 window_pid = ctypes.c_ulong()
                 GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
-                if window_pid.value == self._game_pid and IsWindowVisible(hwnd):
+                if window_pid.value in target_pids and IsWindowVisible(hwnd):
                     hwnds.append(hwnd)
                 return True
             
@@ -591,16 +611,12 @@ class LockScreen(QWidget):
 
     def _minimize_game_windows(self):
         """Minimize the game window during countdown to prevent fullscreen bypass."""
-        logger.info("Minimizing game windows. _WIN_API: %s", _WIN_API)
         if not _WIN_API:
             return
         try:
             hwnds = self._get_game_hwnds()
-            logger.info("Found %d game window handles for PID %d", len(hwnds), self._game_pid)
             for hwnd in hwnds:
-                res = ShowWindow(hwnd, SW_MINIMIZE)
-                err = ctypes.windll.kernel32.GetLastError()
-                logger.info("ShowWindow(hwnd=%s, SW_MINIMIZE) returned: %s, LastError: %s", hwnd, res, err)
+                ShowWindow(hwnd, SW_MINIMIZE)
         except Exception as e:
             logger.error("Error minimizing game windows: %s", e)
 
@@ -627,7 +643,9 @@ class LockScreen(QWidget):
             
             # Minimize game window during countdown to solve fullscreen issues
             if self._countdown_active or getattr(self, "_is_sleep_lock", False):
-                self._minimize_game_windows()
+                if self._minimize_counter % 20 == 1:
+                    self._minimize_game_windows()
+                self._minimize_counter += 1
 
     def _handle_next(self):
         """Go to the next group."""
