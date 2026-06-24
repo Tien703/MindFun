@@ -58,6 +58,14 @@ STRINGS = {
         "mode_3_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 3m</li><li>🌙 <b>Khóa giờ ngủ (Sleep lock):</b> <span style='color:#ed8796;font-weight:bold;'>Khóa màn hình (Overlay)</span></li><li>📋 <b>Công việc chưa xong:</b> Nhắc nhở</li></ul>",
         "mode_4_name": "Thiết quân luật (5 phút)",
         "mode_4_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 5m</li><li>🌙 <b>Khóa giờ ngủ (Sleep lock):</b> <span style='color:#ed8796;font-weight:bold;'>Khóa màn hình (Overlay)</span></li><li>📋 <b>Công việc chưa xong:</b> <span style='color:#ed8796;font-weight:bold;'>Khóa màn hình (Overlay)</span></li></ul>",
+        "mode_5_name": "Tùy chỉnh (Custom)",
+        "mode_5_desc": "<b>Cấu hình:</b><br>Bạn có thể tự cấu hình thời gian đếm ngược và chọn chế độ Nhắc nhở/Khóa màn hình một cách độc lập.",
+        
+        "label_custom_duration": "Thời gian chờ (giây):",
+        "label_custom_sleep": "Khóa giờ ngủ (Sleep Lock):",
+        "label_custom_task": "Công việc chưa xong (Task Lock):",
+        "opt_remind": "Nhắc nhở",
+        "opt_lock": "Khóa màn hình",
 
         # Settings — Games tab
         "add_game_placeholder": "TenGame.exe",
@@ -93,7 +101,7 @@ STRINGS = {
         "log_minutes_suffix": "phút",
 
         # Settings — Language
-        "label_language": "Language / Ngôn ngữ",
+        "label_language": "Ngôn ngữ ",
         
         "group_preset_games": "Game hệ thống (Preset)",
         "group_custom_games": "Game tùy chỉnh (Custom)",
@@ -199,6 +207,14 @@ STRINGS = {
         "mode_3_desc": "<b>Config:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Wait time:</b> 3m</li><li>🌙 <b>Sleep lock:</b> <span style='color:#ed8796;font-weight:bold;'>Lockscreen Overlay</span></li><li>📋 <b>Incomplete tasks:</b> Remind</li></ul>",
         "mode_4_name": "Martial Law (5 mins)",
         "mode_4_desc": "<b>Config:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Wait time:</b> 5m</li><li>🌙 <b>Sleep lock:</b> <span style='color:#ed8796;font-weight:bold;'>Lockscreen Overlay</span></li><li>📋 <b>Incomplete tasks:</b> <span style='color:#ed8796;font-weight:bold;'>Lockscreen Overlay</span></li></ul>",
+        "mode_5_name": "Custom Mode",
+        "mode_5_desc": "<b>Config:</b><br>Freely adjust the wait time (seconds) and choose lockscreen behaviors independently.",
+
+        "label_custom_duration": "Wait time (seconds):",
+        "label_custom_sleep": "Sleep Lock:",
+        "label_custom_task": "Incomplete Tasks (Task Lock):",
+        "opt_remind": "Remind Only",
+        "opt_lock": "Lockscreen",
 
         # Settings — Games tab
         "add_game_placeholder": "GameName.exe",
@@ -234,21 +250,9 @@ STRINGS = {
         "log_minutes_suffix": "min",
 
         # Settings — Language
-        "label_language": "Ngôn ngữ / Language",
+        "label_language": "Language",
         
-        "group_preset_games": "Game hệ thống (Preset)",
-        "group_custom_games": "Game tùy chỉnh (Custom)",
-        "btn_move_up": "▲ Lên",
-        "btn_move_down": "▼ Xuống",
-        "log_chart_title": "Thống kê thời gian chơi:",
-        "log_range_7": "7 Ngày",
-        "log_range_14": "14 Ngày",
-        "log_range_30": "30 Ngày",
-        "log_legend_valid": "Giờ chơi hợp lệ",
-        "log_legend_viol": "Giờ chơi đêm (Vi phạm)",
-        "lang_vietnamese": "Tiếng Việt",
 
-        
         "group_preset_games": "Preset Games",
         "group_custom_games": "Custom Games",
         "btn_move_up": "▲ Up",
@@ -339,4 +343,7 @@ def get_mode_name(mode: int) -> str:
 
 def get_mode_duration(mode: int) -> int:
     """Get the countdown duration in seconds for a mode number."""
+    if mode == 5:
+        from core.config_manager import load_config
+        return load_config().get("custom_mode", {}).get("duration", 60)
     return MODE_DURATIONS.get(mode, 60)

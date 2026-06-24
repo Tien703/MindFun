@@ -149,7 +149,11 @@ class NightGuard:
                         session["last_minute_update"] = now
                 else:
                     # New night violation detected
-                    if mode >= 3:
+                    is_hardcore = mode >= 3
+                    if mode == 5:
+                        is_hardcore = config.get("custom_mode", {}).get("sleep_lock") == "lock"
+                        
+                    if is_hardcore:
                         # Hardcore: formerly killed, now we just notify and let detector overlay Lockscreen
                         logger.info("HARDCORE: Night violation %s (PID %d). Spawning Sleep Lockscreen.", game_lower, pid)
                         session_index = report_logger.start_session(game_lower, night_start)

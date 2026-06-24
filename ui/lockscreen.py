@@ -97,11 +97,9 @@ class LockScreen(QWidget):
         self._is_closing = False
         self._drag_pos = None
 
-        if self._is_sleep_lock:
-            self._checklist_groups = []
-        else:
-            # Load tasks grouped by category
-            _, self._checklist_groups = self._load_questions_and_tasks(config)
+        # Load tasks grouped by category
+        _, self._checklist_groups = self._load_questions_and_tasks(config)
+
             
         self._current_group_index = 0
         
@@ -254,7 +252,7 @@ class LockScreen(QWidget):
         self._breathe_label.setAlignment(Qt.AlignCenter)
         pal = theme.get_settings_palette(load_config().get("dark_mode", True))
         self._breathe_label.setStyleSheet(f"color: {pal['desc_color']}; font-size: 20px; font-style: italic; font-weight: bold; font-family: 'Segoe UI', sans-serif;")
-        if self._is_sleep_lock:
+        if self._is_sleep_lock and not self._is_soft_sleep_lock:
             self._breathe_label.hide()
         content_layout.addWidget(self._breathe_label)
         content_layout.addSpacing(40)
@@ -305,7 +303,7 @@ class LockScreen(QWidget):
             lbl = QLabel(t("waiting_prompt"))
             lbl.setAlignment(Qt.AlignCenter)
             lbl.setObjectName("question_label")
-            if self._is_sleep_lock:
+            if self._is_sleep_lock and not self._is_soft_sleep_lock:
                 lbl.hide()
             content_layout.addWidget(lbl)
             content_layout.addSpacing(60)
@@ -355,13 +353,7 @@ class LockScreen(QWidget):
             self._btn_next.hide()
             
         if self._is_sleep_lock:
-            if self._is_soft_sleep_lock:
-                self._btn_next.hide()
-                self._warning_label.hide()
-                # Play button is controlled by the countdown timer now
-                self._btn_play.setEnabled(not self._countdown_active)
-                self._btn_play.show()
-            else:
+            if not self._is_soft_sleep_lock:
                 self._btn_play.hide()
                 self._btn_next.hide()
                 self._warning_label.hide()
@@ -460,8 +452,15 @@ class LockScreen(QWidget):
         return False
 
     def _check_strict_block(self) -> bool:
-        """Check if playing should be blocked based on mode 4 and unfinished tasks."""
-        if self._mode != 4:
+        """Check if playing should be blocked based on mode 4/5 and unfinished tasks."""
+        is_strict = False
+        if self._mode == 4:
+            is_strict = True
+        elif self._mode == 5:
+            config = load_config()
+            is_strict = config.get("custom_mode", {}).get("task_lock") == "lock"
+            
+        if not is_strict:
             return False
             
         for group in self._checklist_groups:
@@ -641,11 +640,8 @@ class LockScreen(QWidget):
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
             )
             
-            # Minimize game window during countdown to solve fullscreen issues
-            if self._countdown_active or getattr(self, "_is_sleep_lock", False):
-                if self._minimize_counter % 20 == 1:
-                    self._minimize_game_windows()
-                self._minimize_counter += 1
+            # Minimize game window continuously to prevent fullscreen bypass
+            self._minimize_game_windows()
 
     def _handle_next(self):
         """Go to the next group."""

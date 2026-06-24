@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QLineEdit, QListWidget, QListWidgetItem, QTableWidget,
     QTableWidgetItem, QHeaderView, QComboBox, QMessageBox,
     QInputDialog, QSpacerItem, QSizePolicy, QFrame,
-    QGroupBox, QScrollArea, QTimeEdit,
+    QGroupBox, QScrollArea, QTimeEdit, QSpinBox,
 )
 from PyQt5.QtCore import Qt, QTime, QTimer
 from PyQt5.QtGui import QFont, QIcon
@@ -101,7 +101,9 @@ class SettingsWindow(QWidget):
 
         # Commitment Level (Mode)
         group_mode = QGroupBox(t("tab_commitment"))
-        mode_layout = QHBoxLayout(group_mode)
+        mode_main_layout = QVBoxLayout(group_mode)
+        
+        mode_layout = QHBoxLayout()
         
         radio_layout = QVBoxLayout()
         desc_layout = QVBoxLayout()
@@ -120,6 +122,7 @@ class SettingsWindow(QWidget):
             2: (t("mode_2_name"), t("mode_2_desc")),
             3: (t("mode_3_name"), t("mode_3_desc")),
             4: (t("mode_4_name"), t("mode_4_desc")),
+            5: (t("mode_5_name"), t("mode_5_desc")),
         }
 
         for mode_num, (name, desc) in self._modes_data.items():
@@ -135,6 +138,56 @@ class SettingsWindow(QWidget):
 
         mode_layout.addLayout(radio_layout, 1)
         mode_layout.addLayout(desc_layout, 1)
+        
+        mode_main_layout.addLayout(mode_layout)
+        
+        # Custom Mode settings
+        self._custom_mode_widget = QWidget()
+        custom_layout = QVBoxLayout(self._custom_mode_widget)
+        custom_layout.setContentsMargins(0, 8, 0, 0)
+        custom_layout.setSpacing(12)
+        
+        # Duration
+        dur_layout = QHBoxLayout()
+        lbl_dur = QLabel(t("label_custom_duration"))
+        dur_layout.addWidget(lbl_dur)
+        self._custom_duration = QSpinBox()
+        self._custom_duration.setRange(1, 3600)
+        self._custom_duration.setFixedHeight(32)
+        dur_layout.addWidget(self._custom_duration)
+        dur_layout.addStretch()
+        custom_layout.addLayout(dur_layout)
+        
+        # Sleep lock behavior
+        sl_layout = QHBoxLayout()
+        lbl_sl = QLabel(t("label_custom_sleep"))
+        sl_layout.addWidget(lbl_sl)
+        self._custom_sleep = QComboBox()
+        self._custom_sleep.addItems([t("opt_remind"), t("opt_lock")])
+        self._custom_sleep.setFixedHeight(32)
+        sl_layout.addWidget(self._custom_sleep)
+        sl_layout.addStretch()
+        custom_layout.addLayout(sl_layout)
+        
+        # Task lock behavior
+        tl_layout = QHBoxLayout()
+        lbl_tl = QLabel(t("label_custom_task"))
+        tl_layout.addWidget(lbl_tl)
+        self._custom_task = QComboBox()
+        self._custom_task.addItems([t("opt_remind"), t("opt_lock")])
+        self._custom_task.setFixedHeight(32)
+        tl_layout.addWidget(self._custom_task)
+        tl_layout.addStretch()
+        custom_layout.addLayout(tl_layout)
+        
+        # Load custom config
+        custom_config = config.get("custom_mode", {"duration": 60, "sleep_lock": "remind", "task_lock": "remind"})
+        self._custom_duration.setValue(custom_config.get("duration", 60))
+        self._custom_sleep.setCurrentIndex(1 if custom_config.get("sleep_lock") == "lock" else 0)
+        self._custom_task.setCurrentIndex(1 if custom_config.get("task_lock") == "lock" else 0)
+        
+        self._custom_mode_widget.setVisible(current_mode == 5)
+        mode_main_layout.addWidget(self._custom_mode_widget)
             
         layout.addWidget(group_mode)
 
@@ -227,6 +280,10 @@ class SettingsWindow(QWidget):
         """Update description label when mode changes."""
         if mode_id in self._modes_data:
             self._mode_desc_label.setText(self._modes_data[mode_id][1])
+        
+        # Toggle custom widget visibility
+        if hasattr(self, '_custom_mode_widget'):
+            self._custom_mode_widget.setVisible(mode_id == 5)
 
     def _on_ac_toggled(self, checked: bool):
         if not checked:
@@ -287,6 +344,22 @@ class SettingsWindow(QWidget):
         if selected_mode > 0 and config.get("mode") != selected_mode:
             config["mode"] = selected_mode
             logger.info("Mode changed to %d", selected_mode)
+            changed = True
+            
+        # Save custom mode if mode 5 is selected or always save it
+        custom_duration = self._custom_duration.value()
+        custom_sleep_lock = "lock" if self._custom_sleep.currentIndex() == 1 else "remind"
+        custom_task_lock = "lock" if self._custom_task.currentIndex() == 1 else "remind"
+        
+        custom_config = config.get("custom_mode", {})
+        if (custom_config.get("duration") != custom_duration or
+            custom_config.get("sleep_lock") != custom_sleep_lock or
+            custom_config.get("task_lock") != custom_task_lock):
+            config["custom_mode"] = {
+                "duration": custom_duration,
+                "sleep_lock": custom_sleep_lock,
+                "task_lock": custom_task_lock
+            }
             changed = True
             
         if config.get("anti_cheat") != ac_checked:

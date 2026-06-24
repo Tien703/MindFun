@@ -52,12 +52,13 @@ def get_settings_style(is_dark: bool) -> str:
         QPushButton#btn_danger {{ background-color: {accent_danger}; border: none; color: #FFFFFF; }}
         QPushButton#btn_danger:hover {{ background-color: #e63935; }}
         
-        QRadioButton {{ color: {text_primary}; spacing: 8px; font-size: 14px; min-height: 24px; padding: 2px 0; }}
+        QRadioButton {{ color: {text_primary}; spacing: 8px; font-size: 14px; min-height: 32px; padding: 2px 0; }}
         QRadioButton::indicator {{ width: 18px; height: 18px; }}
-        QCheckBox {{ color: {text_primary}; spacing: 8px; font-size: 14px; min-height: 24px; padding: 2px 0; }}
+        QCheckBox {{ color: {text_primary}; spacing: 8px; font-size: 14px; min-height: 32px; padding: 2px 0; }}
         QCheckBox::indicator {{ width: 18px; height: 18px; }}
         
-        QLineEdit {{ background-color: {bg_card}; color: {text_primary}; border: 1px solid {border_color}; border-radius: 6px; padding: 8px 12px; }}
+        QSpinBox {{ background-color: {bg_card}; color: {text_primary}; border: 1px solid {border_color}; border-radius: 6px; padding: 4px 12px; min-height: 32px; }}
+        QLineEdit {{ background-color: {bg_card}; color: {text_primary}; border: 1px solid {border_color}; border-radius: 6px; padding: 4px 12px; min-height: 32px; }}
         QLineEdit:focus {{ border: 2px solid {accent_primary}; padding: 7px 11px; }}
         
         QListWidget {{ background-color: {bg_card}; color: {text_primary}; border: 1px solid {border_color}; border-radius: 6px; padding: 4px; outline: none; }}
@@ -69,7 +70,7 @@ def get_settings_style(is_dark: bool) -> str:
         QTableWidget::item {{ padding: 6px; }}
         QHeaderView::section {{ background-color: {bg_window}; color: {text_secondary}; padding: 8px; border: none; border-bottom: 1px solid {border_color}; font-weight: 600; text-align: left; }}
         
-        QComboBox {{ background-color: {bg_card}; color: {text_primary}; border: 1px solid {border_color}; border-radius: 6px; padding: 6px 12px; }}
+        QComboBox {{ background-color: {bg_card}; color: {text_primary}; border: 1px solid {border_color}; border-radius: 6px; padding: 4px 12px; min-height: 32px; }}
         QComboBox::drop-down {{ border: none; width: 24px; }}
         QComboBox QAbstractItemView {{ background-color: {bg_card}; color: {text_primary}; border: 1px solid {border_color}; border-radius: 6px; selection-background-color: {bg_hover}; selection-color: {text_primary}; outline: none; }}
         
