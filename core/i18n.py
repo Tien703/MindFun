@@ -14,8 +14,10 @@ STRINGS = {
         "unfinished_tasks_ask": "Bạn vẫn còn công việc chưa xong. Bạn có tiếp tục chơi không?",
         "sleep_lock_warning": "Đã quá giờ đi ngủ. Hãy tắt {game} để bảo vệ sức khỏe!",
         "soft_sleep_lock_warning": "Đã đến giờ đi ngủ. Bạn có chắc chắn muốn tiếp tục chơi {game}?",
-        "btn_quit": "QUIT",
-        "btn_play": "PLAY",
+        "btn_quit": "THOÁT",
+        "btn_play": "CHƠI TIẾP",
+        "btn_next": "Tiếp tục",
+        "btn_finish_tasks": "HOÀN THÀNH NHIỆM VỤ ĐỂ CHƠI",
         "waiting_prompt": "Hãy chậm lại và hít thở",
 
         # Tray
@@ -114,18 +116,6 @@ STRINGS = {
         "log_legend_valid": "Giờ chơi hợp lệ",
         "log_legend_viol": "Giờ chơi đêm (Vi phạm)",
         "lang_vietnamese": "Tiếng Việt",
-
-        
-        "group_preset_games": "Preset Games",
-        "group_custom_games": "Custom Games",
-        "btn_move_up": "▲ Up",
-        "btn_move_down": "▼ Down",
-        "log_chart_title": "Playtime Statistics:",
-        "log_range_7": "7 Days",
-        "log_range_14": "14 Days",
-        "log_range_30": "30 Days",
-        "log_legend_valid": "Valid Playtime",
-        "log_legend_viol": "Night Playtime (Violation)",
         "lang_english": "English",
 
 
@@ -165,6 +155,8 @@ STRINGS = {
         "soft_sleep_lock_warning": "It's past your bedtime. Are you sure you want to continue playing {game}?",
         "btn_quit": "QUIT",
         "btn_play": "PLAY",
+        "btn_next": "Next",
+        "btn_finish_tasks": "FINISH TASKS TO PLAY",
         "waiting_prompt": "Take a moment to slow down.",
 
         # Tray
@@ -263,6 +255,8 @@ STRINGS = {
         "log_range_30": "30 Days",
         "log_legend_valid": "Valid Playtime",
         "log_legend_viol": "Night Playtime (Violation)",
+        "lang_vietnamese": "Tiếng Việt",
+        "lang_english": "English",
         "lang_english": "English",
 
 

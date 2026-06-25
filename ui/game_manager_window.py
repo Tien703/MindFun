@@ -11,10 +11,10 @@ from typing import Callable, Optional
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QCheckBox,
     QLineEdit, QPushButton, QMessageBox, QScrollArea, QWidget, QLabel,
-    QShortcut
+    QShortcut, QGraphicsDropShadowEffect
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QKeySequence, QColor
 
 from core.config_manager import load_config, save_config, load_game_presets
 from core.i18n import t
@@ -249,5 +249,25 @@ class GameManagerWindow(QDialog):
         if self._on_config_changed:
             self._on_config_changed()
             
-        QMessageBox.information(self, t("title_game_manager"), t("msg_saved"))
-        self.accept()
+        self._show_toast(t("msg_saved"))
+
+    def _show_toast(self, message: str):
+        toast = QLabel(message, self)
+        is_dark = load_config().get("dark_mode", True)
+        if is_dark:
+            toast.setStyleSheet("background-color: #b6f36d; color: #111111; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px;")
+        else:
+            toast.setStyleSheet("background-color: #b6f36d; color: #111111; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px;")
+        toast.setAlignment(Qt.AlignCenter)
+        toast.adjustSize()
+        toast.move((self.width() - toast.width()) // 2, self.height() - toast.height() - 40)
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(15)
+        shadow.setOffset(0, 4)
+        shadow.setColor(QColor(0, 0, 0, 80))
+        toast.setGraphicsEffect(shadow)
+        
+        toast.show()
+        toast.raise_()
+        QTimer.singleShot(2000, toast.deleteLater)

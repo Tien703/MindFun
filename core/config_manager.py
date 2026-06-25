@@ -13,6 +13,7 @@ from pathlib import Path
 
 # Lock for thread-safe file operations
 _file_lock = threading.Lock()
+_system_language_synced = False
 
 # Resolve paths
 _APPDATA_DIR = Path(os.environ.get("APPDATA", "")) / "Mindfun"
@@ -95,6 +96,11 @@ def load_config() -> dict:
         config["last_reset_date"] = today
         save_config(config)
         
+    global _system_language_synced
+    if not _system_language_synced:
+        update_system_questions_language(config["language"])
+        _system_language_synced = True
+        
     return config
 
 def save_config(config: dict):
@@ -131,20 +137,68 @@ def load_questions() -> dict:
         
 
         save_questions(data)
+    # NEW MIGRATION: Convert task_groups dict to list
+    if isinstance(data.get("task_groups"), dict):
+        merged_groups = []
+        tg = data["task_groups"]
+        # Convert any custom groups that might be in the dict
+        for lang_key, group_list in tg.items():
+            for g in group_list:
+                if not str(g.get("id", "")).startswith("default_"):
+                    merged_groups.append(g)
+        data["task_groups"] = merged_groups
+        save_questions(data)
+        
+        # Now pull in the correct language defaults
+        # We can't call load_config here to prevent circular dependency?
+        # config is already loaded before load_questions in most cases, but let's be safe.
+        update_system_questions_language("vi") # Will be corrected on first config load or language switch
         
     return data
+
+def update_system_questions_language(lang: str):
+    """Swap system default questions to match the newly selected language."""
+    data = load_questions()
+    groups = data.get("task_groups", [])
+    
+    # Check if already correct to avoid redundant writes
+    current_defaults = [g for g in groups if str(g.get("id", "")).startswith("default_")]
+    if current_defaults:
+        if str(current_defaults[0].get("id", "")).startswith(f"default_{lang}_"):
+            return
+            
+    # Keep only custom groups (those without 'default_' prefix)
+    custom_groups = [g for g in groups if not str(g.get("id", "")).startswith("default_")]
+    
+    # Load default groups for the new language from bundle
+    bundle_path = _BUNDLE_DIR / "questions.json"
+    system_groups = []
+    if bundle_path.exists():
+        with open(bundle_path, "r", encoding="utf-8") as f:
+            try:
+                bundle_data = json.load(f)
+                system_groups = bundle_data.get("task_groups", {}).get(lang, [])
+            except Exception:
+                pass
+                
+    # Place system groups at the top
+    data["task_groups"] = system_groups + custom_groups
+    save_questions(data)
 
 def reset_daily_tasks():
     """Reset all 'done' flags to False across all checklist items."""
     data = load_questions()
     changed = False
-    for lang, groups in data.get("task_groups", {}).items():
-        for group in groups:
-            if group.get("is_checklist", False):
-                for item in group.get("items", []):
-                    if item.get("done", False):
-                        item["done"] = False
-                        changed = True
+    groups = data.get("task_groups", [])
+    if isinstance(groups, dict):
+        groups = groups.get("vi", []) + groups.get("en", [])
+        
+    for group in groups:
+        if group.get("is_checklist", False):
+            for item in group.get("items", []):
+                if item.get("done", False):
+                    item["done"] = False
+                    changed = True
     if changed:
         save_questions(data)
 

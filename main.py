@@ -217,7 +217,12 @@ class MindfunApp(QObject):
         
         # Check night block before showing lockscreen
         if is_night_time():
-            if config.get("mode", 2) >= 3:
+            mode = config.get("mode", 2)
+            is_hardcore = mode >= 3
+            if mode == 5:
+                is_hardcore = config.get("custom_mode", {}).get("sleep_lock") == "lock"
+
+            if is_hardcore:
                 # Instead of killing, we just show the lockscreen and log violation
                 logger.info("HARDCORE: Overlaying new launch %s during night hours", game_exe)
                 from core import report_logger
@@ -235,7 +240,7 @@ class MindfunApp(QObject):
                 self._show_sleep_lockscreen(game_exe, game_pid, is_soft=False)
                 return
             else:
-                logger.info("SOFT: Overlaying soft sleep lock for %s during night hours", game_exe)
+                logger.info("SOFT SLEEP LOCK: Game launched at night in reminder mode. Spawning soft sleep lockscreen.")
                 self._show_sleep_lockscreen(game_exe, game_pid, is_soft=True)
                 return
 

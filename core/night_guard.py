@@ -168,8 +168,8 @@ class NightGuard:
                         if self._on_night_lockdown:
                             self._on_night_lockdown(game_lower, pid, False)
                     else:
-                        # Mode 1-2: Silent report + Toast remind
-                        logger.info("Night violation: %s (PID %d), mode %d — silent tracking", game_lower, pid, mode)
+                        # Mode 1-2 (or Custom with soft sleep lock): Soft sleep lockscreen + Toast remind
+                        logger.info("Night violation: %s (PID %d), mode %d — soft lockdown", game_lower, pid, mode)
                         session_index = report_logger.start_session(game_lower, night_start)
                         self._on_toast(
                             t("toast_title"),

@@ -131,10 +131,9 @@ class LockScreen(QWidget):
 
     def _load_questions_and_tasks(self, config: dict) -> tuple[str, list]:
         """Load all tasks from enabled checklist groups (no random questions)."""
-        lang = config.get("language", "vi")
         questions_data = load_questions()
         
-        groups = questions_data.get("task_groups", {}).get(lang, [])
+        groups = questions_data.get("task_groups", [])
             
         all_tasks = []
         
@@ -231,7 +230,7 @@ class LockScreen(QWidget):
         self._progress.setTextVisible(False)
         self._progress.setFixedHeight(8)
         self._progress.setObjectName("countdown_progress")
-        if self._is_sleep_lock:
+        if self._is_sleep_lock and not self._is_soft_sleep_lock:
             self._progress.hide()
         content_layout.addWidget(self._progress)
         content_layout.addSpacing(16)
@@ -275,18 +274,39 @@ class LockScreen(QWidget):
                 
                 if group_data["type"] == "checklist":
                     for group_id, item_id, text, is_done in group_data["items"]:
-                        cb = QCheckBox(text)
+                        item_container = QWidget()
+                        item_layout = QHBoxLayout(item_container)
+                        item_layout.setContentsMargins(0, 0, 0, 0)
+                        item_layout.setSpacing(12)
+                        
+                        cb = QCheckBox()
                         cb.setObjectName("task_checkbox")
                         cb.setChecked(is_done)
+                        
+                        lbl = QLabel(text)
+                        lbl.setWordWrap(True)
+                        lbl.setCursor(Qt.PointingHandCursor)
+                        
+                        is_dark = load_config().get("dark_mode", True)
+                        text_col = theme.get_settings_palette(is_dark)["text_color"]
+                        desc_col = theme.get_settings_palette(is_dark)["desc_color"]
+                        
                         if is_done:
-                            f = cb.font()
+                            f = lbl.font()
                             f.setStrikeOut(True)
-                            cb.setFont(f)
-                            desc_col = theme.get_settings_palette(load_config().get("dark_mode", True))["desc_color"]
-                            cb.setStyleSheet(f"color: {desc_col};")
+                            lbl.setFont(f)
+                            lbl.setStyleSheet(f"color: {desc_col}; font-size: 22px;")
+                        else:
+                            lbl.setStyleSheet(f"color: {text_col}; font-size: 22px;")
                             
-                        cb.clicked.connect(lambda checked, g_id=group_id, i_id=item_id, cb_ref=cb: self._on_task_checked(g_id, i_id, cb_ref))
-                        page_layout.addWidget(cb)
+                        # Link clicking the label to the checkbox
+                        lbl.mousePressEvent = lambda event, cb_ref=cb, g_id=group_id, i_id=item_id, lbl_ref=lbl: cb_ref.setChecked(not cb_ref.isChecked()) or self._on_task_checked(g_id, i_id, cb_ref, lbl_ref)
+                        cb.clicked.connect(lambda checked, g_id=group_id, i_id=item_id, cb_ref=cb, lbl_ref=lbl: self._on_task_checked(g_id, i_id, cb_ref, lbl_ref))
+                        
+                        item_layout.addWidget(cb)
+                        item_layout.addWidget(lbl, 1) # Label takes remaining space
+                        
+                        page_layout.addWidget(item_container)
                 else:
                     lbl = QLabel(f'"{group_data["question"]}"')
                     lbl.setAlignment(Qt.AlignCenter)
@@ -300,7 +320,11 @@ class LockScreen(QWidget):
             scroll_area = QScrollArea()
             scroll_area.setWidgetResizable(True)
             scroll_area.setFrameShape(QFrame.NoFrame)
+            scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             scroll_area.setWidget(self._stacked_checklists)
+            
+            if self._is_sleep_lock and not self._is_soft_sleep_lock:
+                scroll_area.hide()
             
             content_layout.addWidget(scroll_area)
             content_layout.addSpacing(30)
@@ -334,7 +358,7 @@ class LockScreen(QWidget):
         self._btn_quit.setMinimumWidth(280)
 
         # Next button
-        self._btn_next = QPushButton("Next")
+        self._btn_next = QPushButton(t("btn_next"))
         self._btn_next.setObjectName("btn_play") # Reuse play style
         self._btn_next.setEnabled(not self._countdown_active)
         self._btn_next.setCursor(Qt.PointingHandCursor)
@@ -407,28 +431,31 @@ class LockScreen(QWidget):
         is_dark = load_config().get("dark_mode", True)
         self.setStyleSheet(theme.get_lockscreen_style(is_dark))
 
-    def _on_task_checked(self, group_id: str, item_id: str, checkbox: QCheckBox):
+    def _on_task_checked(self, group_id: str, item_id: str, checkbox: QCheckBox, label: QLabel = None):
         """Handle task checkbox click. Save 'done' state to config."""
         is_done = checkbox.isChecked()
+        
+        target = label if label else checkbox
+        is_dark = load_config().get("dark_mode", True)
+        desc_col = theme.get_settings_palette(is_dark)["desc_color"]
+        text_col = theme.get_settings_palette(is_dark)["text_color"]
+        
         if is_done:
             # Strike-through effect
-            f = checkbox.font()
+            f = target.font()
             f.setStrikeOut(True)
-            checkbox.setFont(f)
-            desc_col = theme.get_settings_palette(load_config().get("dark_mode", True))["desc_color"]
-            checkbox.setStyleSheet(f"color: {desc_col};")
+            target.setFont(f)
+            target.setStyleSheet(f"color: {desc_col}; font-size: 22px;")
         else:
-            f = checkbox.font()
+            f = target.font()
             f.setStrikeOut(False)
-            checkbox.setFont(f)
-            text_col = theme.get_settings_palette(load_config().get("dark_mode", True))["text_color"]
-            checkbox.setStyleSheet(f"color: {text_col};")
+            target.setFont(f)
+            target.setStyleSheet(f"color: {text_col}; font-size: 22px;")
 
         # Update JSON
         config = load_config()
-        lang = config.get("language", "vi")
         questions_data = load_questions()
-        groups = questions_data.get("task_groups", {}).get(lang, [])
+        groups = questions_data.get("task_groups", [])
         for g in groups:
             if g.get("id") == group_id:
                 for item in g.get("items", []):
@@ -484,14 +511,14 @@ class LockScreen(QWidget):
         on_last_screen = (self._current_group_index == n - 1) if n > 0 else True
         can_play_time = on_last_screen and not self._countdown_active
         
-        if has_unfinished and can_play_time:
+        if has_unfinished and can_play_time and not is_blocked:
             self._warning_label.show()
         else:
             self._warning_label.hide()
             
         if is_blocked:
             self._btn_play.setEnabled(False)
-            self._btn_play.setText("HOÀN THÀNH NHIỆM VỤ ĐỂ CHƠI")
+            self._btn_play.setText(t("btn_finish_tasks"))
             self._btn_play.setStyleSheet("""
                 QPushButton {
                     color: #ed8796; 

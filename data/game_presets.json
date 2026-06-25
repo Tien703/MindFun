@@ -299,10 +299,6 @@
     {
       "name": "Fall Guys",
       "exe": "FallGuys_client.exe"
-    },
-    {
-      "name": "Notepad",
-      "exe": "Notepad.exe"
     }
   ]
 }

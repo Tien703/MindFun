@@ -20,15 +20,16 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem, QHeaderView, QComboBox, QMessageBox,
     QInputDialog, QSpacerItem, QSizePolicy, QFrame,
     QGroupBox, QScrollArea, QTimeEdit, QSpinBox, QShortcut,
+    QGraphicsDropShadowEffect,
 )
 from PyQt5.QtCore import Qt, QTime, QTimer
-from PyQt5.QtGui import QFont, QIcon, QKeySequence
+from PyQt5.QtGui import QFont, QIcon, QKeySequence, QColor
 
 from core.i18n import t, set_language, get_language
 from core.config_manager import (
     load_config, save_config,
     load_questions, save_questions,
-    load_game_presets,
+    load_game_presets, update_system_questions_language
 )
 from core import report_logger
 from ui.game_manager_window import GameManagerWindow
@@ -56,7 +57,8 @@ class SettingsWindow(QWidget):
         self._on_language_changed = on_language_changed
 
         self.setWindowTitle(t("settings_title"))
-        self.setMinimumSize(700, 550)
+        self.setMinimumSize(550, 720)
+        self.resize(900, 900)
         self.setWindowFlags(Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         self.setStyleSheet(theme.get_settings_style(load_config().get("dark_mode", True)))
 
@@ -103,6 +105,12 @@ class SettingsWindow(QWidget):
     # ─── Tab 0: General Settings ─────────────────────────────────────
 
     def _build_settings_tab(self) -> QWidget:
+        # Main container for the tab
+        main_widget = QWidget()
+        main_layout = QVBoxLayout(main_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(12)
+        
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
@@ -167,6 +175,7 @@ class SettingsWindow(QWidget):
         self._custom_duration = QSpinBox()
         self._custom_duration.setRange(1, 3600)
         self._custom_duration.setFixedHeight(32)
+        self._custom_duration.wheelEvent = lambda event: event.ignore()
         dur_layout.addWidget(self._custom_duration)
         dur_layout.addStretch()
         custom_layout.addLayout(dur_layout)
@@ -178,6 +187,7 @@ class SettingsWindow(QWidget):
         self._custom_sleep = QComboBox()
         self._custom_sleep.addItems([t("opt_remind"), t("opt_lock")])
         self._custom_sleep.setFixedHeight(32)
+        self._custom_sleep.wheelEvent = lambda event: event.ignore()
         sl_layout.addWidget(self._custom_sleep)
         sl_layout.addStretch()
         custom_layout.addLayout(sl_layout)
@@ -189,6 +199,7 @@ class SettingsWindow(QWidget):
         self._custom_task = QComboBox()
         self._custom_task.addItems([t("opt_remind"), t("opt_lock")])
         self._custom_task.setFixedHeight(32)
+        self._custom_task.wheelEvent = lambda event: event.ignore()
         tl_layout.addWidget(self._custom_task)
         tl_layout.addStretch()
         custom_layout.addLayout(tl_layout)
@@ -211,10 +222,12 @@ class SettingsWindow(QWidget):
         lbl_start = QLabel(t("label_night_start"))
         self._time_night_start = QTimeEdit()
         self._time_night_start.setDisplayFormat("HH:mm")
+        self._time_night_start.wheelEvent = lambda event: event.ignore()
         
         lbl_end = QLabel(t("label_day_start"))
         self._time_day_start = QTimeEdit()
         self._time_day_start.setDisplayFormat("HH:mm")
+        self._time_day_start.wheelEvent = lambda event: event.ignore()
         
         ns_str = config.get("night_start", "23:00")
         ds_str = config.get("day_start", "05:00")
@@ -253,6 +266,7 @@ class SettingsWindow(QWidget):
         self._lang_combo = QComboBox()
         self._lang_combo.addItem(t("lang_vietnamese"), "vi")
         self._lang_combo.addItem(t("lang_english"), "en")
+        self._lang_combo.wheelEvent = lambda event: event.ignore()
 
         current_lang = config.get("language", "vi")
         idx = 0 if current_lang == "vi" else 1
@@ -274,16 +288,22 @@ class SettingsWindow(QWidget):
 
 
         layout.addStretch()
-
-        # Save Button
+        scroll.setWidget(widget)
+        
+        main_layout.addWidget(scroll, 1) # Scroll area takes up available space
+        
+        # Save Button (Outside scroll area)
+        btn_layout = QHBoxLayout()
+        btn_layout.setContentsMargins(12, 0, 12, 12)
         btn_save = QPushButton(t("btn_save"))
         btn_save.setObjectName("btn_save_primary")
         btn_save.setMinimumHeight(40)
         btn_save.clicked.connect(self._save_general_settings)
-        layout.addWidget(btn_save)
+        btn_layout.addWidget(btn_save)
+        
+        main_layout.addLayout(btn_layout)
 
-        scroll.setWidget(widget)
-        return scroll
+        return main_widget
 
     def _open_game_manager(self):
         """Open the external Game Manager window."""
@@ -394,7 +414,29 @@ class SettingsWindow(QWidget):
             if self._on_config_changed:
                 self._on_config_changed()
                 
-        QMessageBox.information(self, t("settings_title"), t("msg_saved"))
+        self._show_toast(t("msg_saved"))
+
+    def _show_toast(self, message: str):
+        toast = QLabel(message, self)
+        is_dark = load_config().get("dark_mode", True)
+        if is_dark:
+            toast.setStyleSheet("background-color: #b6f36d; color: #111111; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px;")
+        else:
+            toast.setStyleSheet("background-color: #b6f36d; color: #111111; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px;")
+        toast.setAlignment(Qt.AlignCenter)
+        toast.adjustSize()
+        toast.move((self.width() - toast.width()) // 2, self.height() - toast.height() - 80)
+        
+        # Add a subtle shadow
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(15)
+        shadow.setOffset(0, 4)
+        shadow.setColor(QColor(0, 0, 0, 80))
+        toast.setGraphicsEffect(shadow)
+        
+        toast.show()
+        toast.raise_()
+        QTimer.singleShot(2000, toast.deleteLater)
 
     # ─── Tab 2: Game List ────────────────────────────────────────────
 
@@ -403,12 +445,9 @@ class SettingsWindow(QWidget):
     # ─── Tab 3: Tasks & Groups ───────────────────────────────────────
 
     def _build_questions_tab(self) -> QWidget:
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
-        
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
+        main_widget = QWidget()
+        layout = QVBoxLayout(main_widget)
+        layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(12)
 
         note = QLabel(t("question_note"))
@@ -426,7 +465,9 @@ class SettingsWindow(QWidget):
         group_pane.addWidget(self._group_list)
 
         # Group actions
-        group_btn_layout = QHBoxLayout()
+        group_btn_layout = QVBoxLayout()
+        group_btn_layout.setSpacing(8)
+        
         btn_add_group = QPushButton(t("btn_add_group"))
         btn_add_group.clicked.connect(self._add_group)
         group_btn_layout.addWidget(btn_add_group)
@@ -435,9 +476,8 @@ class SettingsWindow(QWidget):
         btn_edit_group.clicked.connect(self._edit_group)
         group_btn_layout.addWidget(btn_edit_group)
 
-        btn_delete_group = QPushButton("X")
+        btn_delete_group = QPushButton(t("btn_delete"))
         btn_delete_group.setObjectName("btn_danger")
-        btn_delete_group.setFixedWidth(40)
         btn_delete_group.clicked.connect(self._delete_group)
         group_btn_layout.addWidget(btn_delete_group)
 
@@ -473,7 +513,9 @@ class SettingsWindow(QWidget):
         task_pane.addWidget(self._task_list)
 
         # Task actions
-        task_btn_layout = QHBoxLayout()
+        task_btn_layout = QVBoxLayout()
+        task_btn_layout.setSpacing(8)
+        
         btn_add_task = QPushButton(t("btn_add_question"))
         btn_add_task.clicked.connect(self._add_task)
         task_btn_layout.addWidget(btn_add_task)
@@ -498,19 +540,18 @@ class SettingsWindow(QWidget):
         # Initial load
         self._refresh_groups()
 
-        scroll.setWidget(widget)
-        return scroll
+        return main_widget
 
     def _get_current_lang_groups(self):
-        config = load_config()
-        lang = config.get("language", "vi")
         questions_data = load_questions()
-        return questions_data, lang, questions_data.get("task_groups", {}).setdefault(lang, [])
+        if "task_groups" not in questions_data:
+            questions_data["task_groups"] = []
+        return questions_data, questions_data["task_groups"]
 
     def _refresh_groups(self):
         """Refresh the groups list."""
         self._group_list.clear()
-        _, _, groups = self._get_current_lang_groups()
+        _, groups = self._get_current_lang_groups()
         for g in groups:
             self._group_list.addItem(g.get("name", "Unnamed"))
         
@@ -526,7 +567,7 @@ class SettingsWindow(QWidget):
         if row < 0:
             return
             
-        _, _, groups = self._get_current_lang_groups()
+        _, groups = self._get_current_lang_groups()
         if row < len(groups):
             group = groups[row]
             
@@ -554,7 +595,7 @@ class SettingsWindow(QWidget):
         if row < 0:
             return
             
-        q_data, lang, groups = self._get_current_lang_groups()
+        q_data, groups = self._get_current_lang_groups()
         if row < len(groups):
             groups[row]["enabled"] = self._cb_group_enabled.isChecked()
             groups[row]["is_checklist"] = self._cb_group_checklist.isChecked()
@@ -565,7 +606,7 @@ class SettingsWindow(QWidget):
         text, ok = QInputDialog.getText(self, t("group_dialog_title"), "")
         if ok and text.strip():
             import uuid
-            q_data, lang, groups = self._get_current_lang_groups()
+            q_data, groups = self._get_current_lang_groups()
             groups.append({
                 "id": uuid.uuid4().hex,
                 "name": text.strip(),
@@ -580,7 +621,7 @@ class SettingsWindow(QWidget):
         row = self._group_list.currentRow()
         if row < 0: return
         
-        q_data, lang, groups = self._get_current_lang_groups()
+        q_data, groups = self._get_current_lang_groups()
         old_name = groups[row].get("name", "")
         text, ok = QInputDialog.getText(self, t("group_dialog_title"), "", text=old_name)
         if ok and text.strip():
@@ -595,7 +636,7 @@ class SettingsWindow(QWidget):
         if row < 0:
             return
 
-        questions_data, lang, groups = self._get_current_lang_groups()
+        questions_data, groups = self._get_current_lang_groups()
         if row < len(groups):
             del groups[row]
             save_questions(questions_data)
@@ -605,7 +646,7 @@ class SettingsWindow(QWidget):
         """Move selected group up."""
         row = self._group_list.currentRow()
         if row > 0:
-            questions_data, lang, groups = self._get_current_lang_groups()
+            questions_data, groups = self._get_current_lang_groups()
             groups[row - 1], groups[row] = groups[row], groups[row - 1]
             save_questions(questions_data)
             self._refresh_groups()
@@ -614,7 +655,7 @@ class SettingsWindow(QWidget):
     def _move_group_down(self):
         """Move selected group down."""
         row = self._group_list.currentRow()
-        questions_data, lang, groups = self._get_current_lang_groups()
+        questions_data, groups = self._get_current_lang_groups()
         if 0 <= row < len(groups) - 1:
             groups[row + 1], groups[row] = groups[row], groups[row + 1]
             save_questions(questions_data)
@@ -625,7 +666,7 @@ class SettingsWindow(QWidget):
         row = self._group_list.currentRow()
         if row < 0: return
         
-        q_data, lang, groups = self._get_current_lang_groups()
+        q_data, groups = self._get_current_lang_groups()
         groups[row]["enabled"] = self._cb_group_enabled.isChecked()
         groups[row]["is_checklist"] = self._cb_group_checklist.isChecked()
         save_questions(q_data)
@@ -637,7 +678,7 @@ class SettingsWindow(QWidget):
         text, ok = QInputDialog.getText(self, t("question_dialog_title"), "")
         if ok and text.strip():
             import uuid
-            q_data, lang, groups = self._get_current_lang_groups()
+            q_data, groups = self._get_current_lang_groups()
             groups[group_row].setdefault("items", []).append({
                 "id": uuid.uuid4().hex,
                 "text": text.strip(),
@@ -650,8 +691,7 @@ class SettingsWindow(QWidget):
         group_row = self._group_list.currentRow()
         task_row = self._task_list.currentRow()
         if group_row < 0 or task_row < 0: return
-        
-        q_data, lang, groups = self._get_current_lang_groups()
+        q_data, groups = self._get_current_lang_groups()
         items = groups[group_row].get("items", [])
         if task_row < len(items):
             old_text = items[task_row].get("text", "")
@@ -667,7 +707,7 @@ class SettingsWindow(QWidget):
         task_row = self._task_list.currentRow()
         if group_row < 0 or task_row < 0: return
         
-        q_data, lang, groups = self._get_current_lang_groups()
+        q_data, groups = self._get_current_lang_groups()
         items = groups[group_row].get("items", [])
         if task_row < len(items):
             items.pop(task_row)
@@ -679,7 +719,7 @@ class SettingsWindow(QWidget):
         task_row = self._task_list.row(item)
         if group_row < 0 or task_row < 0: return
 
-        q_data, lang, groups = self._get_current_lang_groups()
+        q_data, groups = self._get_current_lang_groups()
         if not groups[group_row].get("is_checklist", False):
             return # Only checklist items have 'done' state
             
@@ -711,6 +751,7 @@ class SettingsWindow(QWidget):
         
         self._range_combo = QComboBox()
         self._range_combo.addItems([t("log_range_7"), t("log_range_14"), t("log_range_30")])
+        self._range_combo.wheelEvent = lambda event: event.ignore()
         self._range_combo.currentIndexChanged.connect(self._refresh_log_chart)
         header_layout.addWidget(self._range_combo)
         layout.addLayout(header_layout)
@@ -768,6 +809,7 @@ class SettingsWindow(QWidget):
             config["language"] = lang
             save_config(config)
             set_language(lang)
+            update_system_questions_language(lang)
             logger.info("Language changed to %s", lang)
 
             # Notify parent to rebuild menus etc.
