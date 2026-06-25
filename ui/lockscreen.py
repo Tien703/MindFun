@@ -21,7 +21,7 @@ from typing import Optional
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QProgressBar, QApplication, QGraphicsDropShadowEffect, QCheckBox,
-    QStackedWidget, QSizeGrip
+    QStackedWidget, QSizeGrip, QScrollArea, QFrame
 )
 from PyQt5.QtCore import Qt, QTimer, QByteArray
 from PyQt5.QtGui import QFont, QColor, QPalette, QLinearGradient, QPainter
@@ -198,7 +198,7 @@ class LockScreen(QWidget):
         content = QWidget()
         content.setObjectName("lockscreen_content")
         content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(80, 60, 80, 60)
+        content_layout.setContentsMargins(40, 30, 40, 30)
         content_layout.setSpacing(0)
 
         # ── Game name label ──
@@ -297,8 +297,13 @@ class LockScreen(QWidget):
                 page_layout.addStretch() # Push items to top
                 self._stacked_checklists.addWidget(page)
                 
-            content_layout.addWidget(self._stacked_checklists)
-            content_layout.addSpacing(60)
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setFrameShape(QFrame.NoFrame)
+            scroll_area.setWidget(self._stacked_checklists)
+            
+            content_layout.addWidget(scroll_area)
+            content_layout.addSpacing(30)
         else:
             lbl = QLabel(t("waiting_prompt"))
             lbl.setAlignment(Qt.AlignCenter)
@@ -306,7 +311,7 @@ class LockScreen(QWidget):
             if self._is_sleep_lock and not self._is_soft_sleep_lock:
                 lbl.hide()
             content_layout.addWidget(lbl)
-            content_layout.addSpacing(60)
+            content_layout.addSpacing(30)
 
         # ── Action buttons ──
         self._warning_label = QLabel(t("unfinished_tasks_ask"))

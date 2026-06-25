@@ -10,9 +10,11 @@ from typing import Callable, Optional
 
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QCheckBox,
-    QLineEdit, QPushButton, QMessageBox, QScrollArea, QWidget, QLabel
+    QLineEdit, QPushButton, QMessageBox, QScrollArea, QWidget, QLabel,
+    QShortcut
 )
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QKeySequence
 
 from core.config_manager import load_config, save_config, load_game_presets
 from core.i18n import t
@@ -26,9 +28,18 @@ class GameManagerWindow(QDialog):
         self._on_config_changed = on_config_changed
         self.setWindowTitle(t("title_game_manager"))
         self.setMinimumSize(500, 650)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+
+        self._fullscreen_shortcut = QShortcut(QKeySequence("F11"), self)
+        self._fullscreen_shortcut.activated.connect(self._toggle_fullscreen)
 
         self._build_ui()
+
+    def _toggle_fullscreen(self):
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
 
     def _build_ui(self):
         layout = QVBoxLayout(self)

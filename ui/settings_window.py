@@ -19,10 +19,10 @@ from PyQt5.QtWidgets import (
     QLineEdit, QListWidget, QListWidgetItem, QTableWidget,
     QTableWidgetItem, QHeaderView, QComboBox, QMessageBox,
     QInputDialog, QSpacerItem, QSizePolicy, QFrame,
-    QGroupBox, QScrollArea, QTimeEdit, QSpinBox,
+    QGroupBox, QScrollArea, QTimeEdit, QSpinBox, QShortcut,
 )
 from PyQt5.QtCore import Qt, QTime, QTimer
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import QFont, QIcon, QKeySequence
 
 from core.i18n import t, set_language, get_language
 from core.config_manager import (
@@ -57,7 +57,7 @@ class SettingsWindow(QWidget):
 
         self.setWindowTitle(t("settings_title"))
         self.setMinimumSize(700, 550)
-        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
+        self.setWindowFlags(Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         self.setStyleSheet(theme.get_settings_style(load_config().get("dark_mode", True)))
 
         self._build_ui()
@@ -67,6 +67,15 @@ class SettingsWindow(QWidget):
         self._auto_refresh_timer = QTimer(self)
         self._auto_refresh_timer.timeout.connect(self._on_auto_refresh)
         self._auto_refresh_timer.start(3000)
+
+        self._fullscreen_shortcut = QShortcut(QKeySequence("F11"), self)
+        self._fullscreen_shortcut.activated.connect(self._toggle_fullscreen)
+
+    def _toggle_fullscreen(self):
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
 
     def _on_auto_refresh(self):
         """Automatically refresh chart if log tab is visible."""
@@ -94,6 +103,10 @@ class SettingsWindow(QWidget):
     # ─── Tab 0: General Settings ─────────────────────────────────────
 
     def _build_settings_tab(self) -> QWidget:
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setSpacing(24)
@@ -269,7 +282,8 @@ class SettingsWindow(QWidget):
         btn_save.clicked.connect(self._save_general_settings)
         layout.addWidget(btn_save)
 
-        return widget
+        scroll.setWidget(widget)
+        return scroll
 
     def _open_game_manager(self):
         """Open the external Game Manager window."""
@@ -389,6 +403,10 @@ class SettingsWindow(QWidget):
     # ─── Tab 3: Tasks & Groups ───────────────────────────────────────
 
     def _build_questions_tab(self) -> QWidget:
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setSpacing(12)
@@ -480,7 +498,8 @@ class SettingsWindow(QWidget):
         # Initial load
         self._refresh_groups()
 
-        return widget
+        scroll.setWidget(widget)
+        return scroll
 
     def _get_current_lang_groups(self):
         config = load_config()
@@ -675,6 +694,10 @@ class SettingsWindow(QWidget):
     # ─── Tab 4: Violation Log ────────────────────────────────────────
 
     def _build_log_tab(self) -> QWidget:
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setSpacing(12)
@@ -720,7 +743,8 @@ class SettingsWindow(QWidget):
 
         self._refresh_log_chart()
 
-        return widget
+        scroll.setWidget(widget)
+        return scroll
 
     def _refresh_log_chart(self):
         """Refresh the violation log chart."""

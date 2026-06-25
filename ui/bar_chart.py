@@ -22,6 +22,7 @@ class PlayTimeBarChart(QWidget):
         """
         self._data = data
         self._days = days
+        self.setMinimumWidth(days * 40 + 60) # Ensure each bar has enough space
         self.update()
 
     def set_dark_mode(self, is_dark: bool):

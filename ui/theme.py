@@ -77,6 +77,21 @@ def get_settings_style(is_dark: bool) -> str:
         QGroupBox {{ color: {text_primary}; border: 1px solid {border_color}; border-radius: 8px; margin-top: 16px; padding-top: 18px; font-weight: 600; font-size: 14px; }}
         QGroupBox::title {{ subcontrol-origin: margin; left: 16px; padding: 0 4px; background-color: transparent; }}
         
+        QScrollArea {{ background-color: transparent; border: none; }}
+        QScrollArea > QWidget > QWidget {{ background-color: transparent; }}
+        
+        QScrollBar:vertical {{ border: none; background: transparent; width: 8px; margin: 0px; }}
+        QScrollBar::handle:vertical {{ background: {border_color}; min-height: 20px; border-radius: 4px; }}
+        QScrollBar::handle:vertical:hover {{ background: {text_secondary}; }}
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ border: none; background: none; height: 0px; }}
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: none; }}
+        
+        QScrollBar:horizontal {{ border: none; background: transparent; height: 8px; margin: 0px; }}
+        QScrollBar::handle:horizontal {{ background: {border_color}; min-width: 20px; border-radius: 4px; }}
+        QScrollBar::handle:horizontal:hover {{ background: {text_secondary}; }}
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ border: none; background: none; width: 0px; }}
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{ background: none; }}
+        
         QFrame#separator {{ background-color: {border_color}; max-height: 1px; }}
     """
 
@@ -189,6 +204,21 @@ def get_lockscreen_style(is_dark: bool) -> str:
             background-color: {bg_hover};
             color: {text_secondary};
         }}
+        
+        QScrollArea {{ background-color: transparent; border: none; }}
+        QScrollArea > QWidget > QWidget {{ background-color: transparent; }}
+        
+        QScrollBar:vertical {{ border: none; background: transparent; width: 8px; margin: 0px; }}
+        QScrollBar::handle:vertical {{ background: {border_color}; min-height: 20px; border-radius: 4px; }}
+        QScrollBar::handle:vertical:hover {{ background: {text_secondary}; }}
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ border: none; background: none; height: 0px; }}
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: none; }}
+        
+        QScrollBar:horizontal {{ border: none; background: transparent; height: 8px; margin: 0px; }}
+        QScrollBar::handle:horizontal {{ background: {border_color}; min-width: 20px; border-radius: 4px; }}
+        QScrollBar::handle:horizontal:hover {{ background: {text_secondary}; }}
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ border: none; background: none; width: 0px; }}
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{ background: none; }}
     """
 
 def get_tray_style(is_dark: bool) -> str:
