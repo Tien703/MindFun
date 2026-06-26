@@ -14,17 +14,16 @@ Anti-bypass features:
 - Overlay Mode Only: Does not suspend or kill the game to bypass Anti-Cheats.
 """
 
-import random
 import logging
 from typing import Optional
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QProgressBar, QApplication, QGraphicsDropShadowEffect, QCheckBox,
+    QProgressBar, QApplication, QCheckBox,
     QStackedWidget, QSizeGrip, QScrollArea, QFrame
 )
 from PyQt5.QtCore import Qt, QTimer, QByteArray
-from PyQt5.QtGui import QFont, QColor, QPalette, QLinearGradient, QPainter
+from PyQt5.QtGui import QColor, QLinearGradient, QPainter
 
 from core.i18n import t, get_mode_duration
 from core.config_manager import load_config, load_questions, save_questions
@@ -81,8 +80,6 @@ class LockScreen(QWidget):
         super().__init__(parent)
         self._game_exe = game_exe
         self._game_pid = game_pid
-        self._launcher_exe = launcher_exe
-        self._launcher_pid = launcher_pid
         self._on_play = on_play
         self._on_quit = on_quit
         self._is_sleep_lock = is_sleep_lock
@@ -453,7 +450,6 @@ class LockScreen(QWidget):
             target.setStyleSheet(f"color: {text_col}; font-size: 22px;")
 
         # Update JSON
-        config = load_config()
         questions_data = load_questions()
         groups = questions_data.get("task_groups", [])
         for g in groups:
@@ -467,7 +463,7 @@ class LockScreen(QWidget):
         # Update internal state and check strict block
         for group in self._checklist_groups:
             if group["id"] == group_id and group["type"] == "checklist":
-                for i, (g_id, i_id, txt, done_val) in enumerate(group["items"]):
+                for i, (g_id, i_id, txt, _) in enumerate(group["items"]):
                     if i_id == item_id:
                         group["items"][i] = (g_id, i_id, txt, is_done)
                         break
@@ -577,8 +573,7 @@ class LockScreen(QWidget):
                 self._is_closing = True
                 
                 # Let the detector know this PID is gone, just in case
-                from main import MindfunApp
-                
+                # Let the detector know this PID is gone, just in case
                 self.close()
         except Exception as e:
             logger.error("Error checking process alive: %s", e)
@@ -626,7 +621,7 @@ class LockScreen(QWidget):
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                     pass
                     
-            def callback(hwnd, extra):
+            def callback(hwnd, _):
                 window_pid = ctypes.c_ulong()
                 GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
                 if window_pid.value in target_pids and IsWindowVisible(hwnd):

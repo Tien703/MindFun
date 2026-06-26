@@ -9,7 +9,7 @@ import logging
 from typing import Optional, Callable
 
 from PyQt5.QtWidgets import (
-    QSystemTrayIcon, QMenu, QAction, QMessageBox, QApplication,
+    QSystemTrayIcon, QMenu, QAction, QMessageBox,
 )
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QCoreApplication
@@ -182,15 +182,7 @@ class TrayIcon(QSystemTrayIcon):
         if self._on_resume:
             self._on_resume()
 
-    def _reset_whitelist(self):
-        if self._on_reset_whitelist:
-            self._on_reset_whitelist()
-            self.showMessage(
-                t("tray_title"),
-                "Dev Mode: Đã xóa danh sách Game cho phép.",
-                QSystemTrayIcon.Information,
-                3000
-            )
+
 
     def _show_about(self):
         """Show the About dialog."""

@@ -16,22 +16,20 @@ from typing import Optional, Callable
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QLabel,
     QPushButton, QRadioButton, QButtonGroup, QCheckBox,
-    QLineEdit, QListWidget, QListWidgetItem, QTableWidget,
-    QTableWidgetItem, QHeaderView, QComboBox, QMessageBox,
-    QInputDialog, QSpacerItem, QSizePolicy, QFrame,
+    QListWidget, QComboBox, QMessageBox,
+    QInputDialog, QFrame,
     QGroupBox, QScrollArea, QTimeEdit, QSpinBox, QShortcut,
     QGraphicsDropShadowEffect,
 )
 from PyQt5.QtCore import Qt, QTime, QTimer
-from PyQt5.QtGui import QFont, QIcon, QKeySequence, QColor
+from PyQt5.QtGui import QKeySequence, QColor
 
-from core.i18n import t, set_language, get_language
+from core.i18n import t, set_language
 from core.config_manager import (
     load_config, save_config,
     load_questions, save_questions,
-    load_game_presets, update_system_questions_language
+    update_system_questions_language
 )
-from core import report_logger
 from ui.game_manager_window import GameManagerWindow
 
 logger = logging.getLogger("mindfun.settings_window")

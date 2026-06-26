@@ -142,7 +142,7 @@ def load_questions() -> dict:
         merged_groups = []
         tg = data["task_groups"]
         # Convert any custom groups that might be in the dict
-        for lang_key, group_list in tg.items():
+        for _, group_list in tg.items():
             for g in group_list:
                 if not str(g.get("id", "")).startswith("default_"):
                     merged_groups.append(g)

@@ -8,12 +8,9 @@ when the game is successfully terminated.
 
 import logging
 from typing import Callable
-import psutil
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication
 from PyQt5.QtCore import Qt, QTimer
-
-from core.config_manager import load_config
 import ui.theme as theme
 
 # For SetWindowPos HWND_TOPMOST
@@ -79,7 +76,6 @@ class QuitPopup(QWidget):
         from core.config_manager import load_config, get_game_name
         layout.setContentsMargins(0, 0, 0, 0)
         
-        pal = theme.get_settings_palette(load_config().get("dark_mode", True))
         self.setStyleSheet(f"""
             QWidget {{
                 background-color: #fe413c;
@@ -147,7 +143,7 @@ class QuitPopup(QWidget):
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                     pass
                     
-            def callback(hwnd, extra):
+            def callback(hwnd, _):
                 window_pid = ctypes.c_ulong()
                 GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
                 if window_pid.value in target_pids and IsWindowVisible(hwnd):

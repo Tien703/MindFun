@@ -65,7 +65,19 @@ class MindfunApp(QObject):
         # Single instance lock
         self._shared_mem = QSharedMemory("MindfunSharedInstanceLock")
         if not self._shared_mem.create(1):
-            print("Another instance of Mindfun is already running. Exiting.")
+            try:
+                from winotify import Notification
+                import os
+                icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets", "icon.ico"))
+                toast = Notification(
+                    app_id="Mindfun",
+                    title="Mindfun",
+                    msg="Mindfun already running!",
+                    icon=icon_path if os.path.exists(icon_path) else ""
+                )
+                toast.show()
+            except Exception as e:
+                print(f"Toast failed: {e}")
             sys.exit(0)
 
         # Load config and set language

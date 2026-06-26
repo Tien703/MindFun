@@ -75,9 +75,7 @@ class GameDetector:
         self._paused = False
         logger.info("GameDetector resumed")
 
-    def is_paused(self) -> bool:
-        """Check if the detector is currently paused."""
-        return self._paused
+
 
     def whitelist_game(self, game_exe: str):
         """

@@ -97,7 +97,6 @@ def get_settings_style(is_dark: bool) -> str:
 
 def get_lockscreen_style(is_dark: bool) -> str:
     accent_primary = "#f2b42c"
-    accent_danger = "#fe413c"
     accent_success = "#b6f36d"
     
     if is_dark:

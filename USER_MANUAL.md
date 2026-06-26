@@ -17,28 +17,23 @@ Mindfun là một ứng dụng trên Windows được thiết kế dựa trên n
 - 📋 **Checklist & Câu hỏi:** Đưa ra những công việc chưa làm hoặc những câu hỏi để bạn tự hỏi bản thân trong lúc chờ đợi. 
 
 ## 4. Hướng dẫn Cấu hình (Settings)
-Click chuột phải vào biểu tượng Mindfun ở khay hệ thống, chọn **"Mở Cài Đặt..."**.
+Click chuột phải vào biểu tượng Mindfun ở khay hệ thống, chọn **"Mở Cài Đặt..."**. Giao diện cài đặt bao gồm 3 tab chính:
 
-### 4.1. Tab: Mức Độ Cam Kết
-Có 5 mức độ để bạn lựa chọn tùy theo tình trạng "nghiện" game của mình:
-- **Mức 1 (Nhắc nhở - 15 giây):** Nhẹ nhàng, chủ yếu là nhắc nhở.
-- **Mức 2 (Kỷ luật - 1 phút):** Chờ 1 phút trước khi chơi.
-- **Mức 3 (Cai nghiện - 3 phút):** Chờ 3 phút. Kèm theo hiệu ứng màn hình cảnh báo mạnh nếu bạn chơi game quá giờ đi ngủ.
-- **Mức 4 (Thiết quân luật - 5 phút):** Chờ 5 phút. Khóa hoàn toàn nút **PLAY** nếu bạn chưa hoàn thành các Checklist công việc đề ra.
-- **Mức 5 (Tùy chỉnh):** Bạn được tự do chọn thời gian chờ (giây) và cách khóa ban đêm / công việc theo ý muốn.
+### 4.1. Tab: Cài Đặt Chung (General Settings)
+Nơi chứa toàn bộ các tùy chỉnh cốt lõi của phần mềm:
+- **Mức Độ Cam Kết:** 5 mức độ từ 15 giây (Nhắc nhở) đến 5 phút (Thiết quân luật). Mức 5 cho phép bạn tự do tùy chỉnh thời gian chờ.
+- **Giờ đi ngủ (Sleep Lock):** Thiết lập khung giờ cấm chơi game ban đêm (mặc định 23:00 đến 05:00 sáng). Nếu mở game vào khung giờ này, màn hình sẽ có cảnh báo đỏ nghiêm khắc.
+- **Chặn thoát nhanh (Anti-Cheat):** Nếu bật, nút **"Thoát Mindfun"** và **"Tạm dừng"** ở khay hệ thống sẽ bị ẩn đi, ép bạn phải dùng Task Manager nếu muốn gian lận.
+- **Ngôn ngữ / Giao diện:** Cho phép đổi Tiếng Việt/English và bật/tắt Giao diện tối (Dark Mode).
+- **Nút "Quản Lý Danh Sách Game":** Mở ra cửa sổ để bạn Thêm/Xóa các tựa game cần giám sát (Yêu cầu điền tên file `.exe` của game, VD: `LeagueClient.exe`). MindFun đã tích hợp sẵn danh sách 75 game phổ biến nhất để bạn dễ dàng lựa chọn.
 
-### 4.2. Tab: Danh Sách Game
-- Cung cấp danh sách các game mà phần mềm sẽ theo dõi (giám sát tự động mỗi 3 giây).
-- Chọn **"Quản lý Danh sách Game"** để Thêm/Xóa game theo ý muốn. Bạn cần điền chính xác tên file thực thi (`.exe`) của game đó (Ví dụ: `javaw.exe`, `LeagueClient.exe`, ...).
+### 4.2. Tab: Câu Hỏi Thức Tỉnh (Mindful Questions)
+- Nơi bạn soạn các công việc chưa làm hoặc câu hỏi suy ngẫm để phần mềm tự động hiển thị ngẫu nhiên lúc đếm ngược.
+- **Dùng làm Checklist:** Nếu bạn tích chọn mục này, bạn sẽ bắt buộc phải tick (✅) hoàn thành các công việc trên màn hình thì nút **PLAY** mới được mở khóa (áp dụng ở Mức 4 hoặc Mức 5 có bật "Bắt buộc làm Checkist").
 
-### 4.3. Tab: Câu Hỏi Thức Tỉnh (Checklist)
-- Nơi bạn soạn các công việc chưa làm hoặc câu hỏi suy ngẫm để hiển thị lúc đếm ngược.
-- Nếu bạn tạo một nhóm và bật **"Dùng làm Checklist"**, bạn sẽ bắt buộc phải tick (✅) hoàn thành các công việc đó thì nút **PLAY** mới được mở khóa (áp dụng ở Mức 4 hoặc Mức Tùy chỉnh).
-
-### 4.4. Tab: Cài Đặt Chung
-- **Giờ đi ngủ (Sleep Lock):** Thiết lập giờ khóa ban đêm (mặc định từ 23:00 đến 05:00 sáng).
-- **Chặn thoát nhanh (Anti-Cheat):** Nếu bật, nút **"Thoát Mindfun"** và **"Tạm dừng hôm nay"** sẽ biến mất ở khay hệ thống. 
-- **Ngôn ngữ:** Chọn Tiếng Việt hoặc English.
+### 4.3. Tab: Nhật Ký (Log)
+- Theo dõi thống kê thời gian bạn đã chơi game mỗi ngày bằng biểu đồ trực quan.
+- Hiển thị danh sách các lần bạn vi phạm (mở game vào giờ đi ngủ) để tiện tự kiểm điểm bản thân.
 
 ## 5. Trải Nghiệm Khi Mở Game
 1. Bạn mở một tựa game đã được thêm vào Danh sách Game.

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QToolTip
 from PyQt5.QtGui import QPainter, QColor, QFont, QPen, QBrush
-from PyQt5.QtCore import Qt, QRect, QPoint
+from PyQt5.QtCore import Qt, QRect
 from datetime import datetime, timedelta
 
 import ui.theme as theme
@@ -96,7 +96,6 @@ class PlayTimeBarChart(QWidget):
             
             # Clamp violation to not exceed total (just in case)
             viol_sec = min(viol_sec, total_sec)
-            valid_sec = total_sec - viol_sec
 
             # Calculate heights
             graph_height = height - margin_top - margin_bottom

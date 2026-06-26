@@ -1,14 +1,8 @@
 r"""
 Mindfun — Startup Manager
 
-Registers Mindfun to auto-start using three independent methods
-for maximum persistence:
-1. Registry Run key (HKCU\Software\Microsoft\Windows\CurrentVersion\Run)
-2. Task Scheduler (at logon)
-3. Startup folder shortcut
-
-The user would need to disable all three to prevent auto-start,
-adding significant friction against impulse bypass.
+Registers Mindfun to auto-start.
+Currently uses Registry Run key (HKCU\Software\Microsoft\Windows\CurrentVersion\Run).
 """
 
 import logging
@@ -31,7 +25,7 @@ def _get_pythonw_executable() -> str:
 def _get_exe_path() -> str:
     """Get the path to the Mindfun executable."""
     if getattr(sys, 'frozen', False):
-        return sys.executable
+        return f'"{sys.executable}"'
     else:
         # Dev mode: use pythonw + main.py
         return f'"{_get_pythonw_executable()}" "{Path(__file__).resolve().parent.parent / "main.py"}"'
@@ -87,25 +81,7 @@ def unregister_registry_startup():
 
 
 
-# ─── Method 3: Startup Folder ───────────────────────────────────────
-
-def register_startup_folder():
-    """Create a shortcut in the user's Startup folder."""
-    try:
-        startup_dir = Path(os.environ.get("APPDATA", "")) / \
-            r"Microsoft\Windows\Start Menu\Programs\Startup"
-        shortcut_path = startup_dir / "Mindfun.bat"
-
-        # Write a simple batch file that starts Mindfun silently
-        exe = _get_exe_path()
-        with open(shortcut_path, "w") as f:
-            f.write(f'@echo off\nstart /min "" {exe}\n')
-
-        logger.info("Created startup folder shortcut: %s", shortcut_path)
-        return True
-    except Exception as e:
-        logger.error("Failed to create startup folder shortcut: %s", e)
-        return False
+# ─── Legacy Cleanup ─────────────────────────────────────────────────
 
 
 def unregister_startup_folder():
@@ -123,10 +99,12 @@ def unregister_startup_folder():
 # ─── Combined Operations ────────────────────────────────────────────
 
 def register_all_startup():
-    """Register all three startup methods."""
+    """Register startup methods and clean up legacy methods."""
+    # Clean up legacy startup folder bat file if it exists
+    unregister_startup_folder()
+    
     results = {
         "registry": register_registry_startup(),
-        "startup_folder": register_startup_folder(),
     }
     logger.info("Startup registration results: %s", results)
     return results
@@ -162,10 +140,5 @@ def check_startup_status() -> dict[str, bool]:
         status["registry"] = False
 
 
-
-    # Check Startup folder
-    startup_dir = Path(os.environ.get("APPDATA", "")) / \
-        r"Microsoft\Windows\Start Menu\Programs\Startup"
-    status["startup_folder"] = (startup_dir / "Mindfun.bat").exists()
 
     return status

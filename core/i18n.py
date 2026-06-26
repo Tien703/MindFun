@@ -307,10 +307,6 @@ def set_language(lang_code: str):
         _current_lang = lang_code
 
 
-def get_language() -> str:
-    """Get the current language code."""
-    return _current_lang
-
 
 def t(key: str, **kwargs) -> str:
     """
