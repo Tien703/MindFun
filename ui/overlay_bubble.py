@@ -25,19 +25,35 @@ class OverlayBubble(QWidget):
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
         
-        self.setFixedSize(60, 60)
+        self.setFixedSize(120, 120)
         self._drag_pos = None
         self._is_first_show = True
         self._is_hovered = False
         self._has_dragged = False
         
-        # Load icon if available
-        self._icon_pixmap = None
-        if self._icon_path:
-            from PyQt5.QtGui import QPixmap
-            pix = QPixmap(self._icon_path)
+        self._full_opacity = 0.0
+        self._is_angry = False
+        
+        import os
+        from PyQt5.QtGui import QPixmap
+        base_dir = os.path.join(os.path.dirname(__file__), "..", "assets", "sprites")
+        
+        def load_sprite(name):
+            pix = QPixmap(os.path.join(base_dir, name))
             if not pix.isNull():
-                self._icon_pixmap = pix.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                return pix.scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            return None
+            
+        self._pix_empty = load_sprite("meditation empty.png")
+        self._pix_full = load_sprite("meditation full ball.png")
+        self._pix_angry = load_sprite("aangry ball.png")
+        
+        self._fade_timer = QTimer(self)
+        self._fade_timer.timeout.connect(self._update_fade)
+        
+        self._night_timer = QTimer(self)
+        self._night_timer.timeout.connect(self._check_night_time)
+        self._night_timer.start(10000)
         
         # The message popup widget
         self.popup = QLabel()
@@ -66,6 +82,20 @@ class OverlayBubble(QWidget):
         self._auto_hide_timer.setSingleShot(True)
         self._auto_hide_timer.timeout.connect(self.hide_message)
         
+    def _update_fade(self):
+        self._full_opacity += 0.02
+        if self._full_opacity >= 1.0:
+            self._full_opacity = 1.0
+            self._fade_timer.stop()
+        self.update()
+        
+    def _check_night_time(self):
+        from core.night_guard import is_night_time
+        is_angry = is_night_time()
+        if self._is_angry != is_angry:
+            self._is_angry = is_angry
+            self.update()
+
     def showEvent(self, event):
         if self._is_first_show:
             screen = QApplication.primaryScreen().availableGeometry()
@@ -74,6 +104,9 @@ class OverlayBubble(QWidget):
             y = screen.height() - self.height() - 80
             self.move(x, y)
             self._is_first_show = False
+            QTimer.singleShot(1000, lambda: self._fade_timer.start(50))
+            
+        self._check_night_time()
         super().showEvent(event)
         
     def show_message(self, text: str, duration_ms: int = 15000):
@@ -115,33 +148,25 @@ class OverlayBubble(QWidget):
         super().leaveEvent(event)
             
     def paintEvent(self, event):
-        """Draw a custom green circular background."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # Draw the green circle
-        if self._is_hovered:
-            painter.setBrush(QColor("#00E676")) # Brighter green when hovered
+        if self._is_angry and self._pix_angry:
+            x = (self.width() - self._pix_angry.width()) // 2
+            y = (self.height() - self._pix_angry.height()) // 2
+            painter.drawPixmap(x, y, self._pix_angry)
         else:
-            painter.setBrush(QColor("#00C853")) # Normal green
-            
-        painter.setPen(Qt.NoPen)
-        # Slightly larger if hovered
-        margin = 3 if self._is_hovered else 5
-        size = 54 if self._is_hovered else 50
-        painter.drawEllipse(margin, margin, size, size)
-        
-        # Draw a little text or icon inside the circle
-        if self._icon_pixmap:
-            # Draw the pixmap centered
-            x = (self.width() - self._icon_pixmap.width()) // 2
-            y = (self.height() - self._icon_pixmap.height()) // 2
-            painter.drawPixmap(x, y, self._icon_pixmap)
-        else:
-            painter.setPen(QColor("#FFFFFF"))
-            font = QFont("Segoe UI", 12, QFont.Bold)
-            painter.setFont(font)
-            painter.drawText(self.rect(), Qt.AlignCenter, "MF")
+            if self._pix_empty:
+                painter.setOpacity(1.0 - self._full_opacity)
+                x = (self.width() - self._pix_empty.width()) // 2
+                y = (self.height() - self._pix_empty.height()) // 2
+                painter.drawPixmap(x, y, self._pix_empty)
+                
+            if self._pix_full and self._full_opacity > 0:
+                painter.setOpacity(self._full_opacity)
+                x = (self.width() - self._pix_full.width()) // 2
+                y = (self.height() - self._pix_full.height()) // 2
+                painter.drawPixmap(x, y, self._pix_full)
         
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.LeftButton:
@@ -184,3 +209,4 @@ class OverlayBubble(QWidget):
             else:
                 self.on_double_click.emit()
             event.accept()
+
