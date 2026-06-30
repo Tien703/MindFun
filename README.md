@@ -170,7 +170,3 @@ mindfun/
 * **No Rigid Blocks**: You are always given the option to play after reflecting. The target is mindfulness, not strict restriction.
 
 ---
-
-## License
-
-Open Source — **MIT License**.
