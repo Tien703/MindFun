@@ -144,29 +144,16 @@ class LockScreen(QWidget):
         all_tasks = []
         
         for group in groups:
-            if not group.get("enabled", True):
-                continue
-            
             items = group.get("items", [])
             if not items:
                 continue
                 
-            if group.get("is_checklist", False):
-                all_tasks.append({
-                    "id": group["id"],
-                    "name": group.get("name", "Tasks"),
-                    "type": "checklist",
-                    "items": [(group["id"], item["id"], item["text"], item.get("done", False)) for item in items]
-                })
-            else:
-                import random
-                question = random.choice(items).get("text", "")
-                all_tasks.append({
-                    "id": group["id"],
-                    "name": group.get("name", "Question"),
-                    "type": "question",
-                    "question": question
-                })
+            all_tasks.append({
+                "id": group["id"],
+                "name": group.get("name", "Tasks"),
+                "type": "checklist",
+                "items": [(group["id"], item["id"], item["text"], item.get("done", False)) for item in items]
+            })
                     
         return "", all_tasks
 
@@ -213,19 +200,15 @@ class LockScreen(QWidget):
         from core.config_manager import get_game_name
         friendly_name = get_game_name(self._game_exe)
         
-        if self._is_sleep_lock:
-            if self._is_soft_sleep_lock:
-                self._game_label = QLabel(t("soft_sleep_lock_warning", game=friendly_name))
-            else:
-                self._game_label = QLabel(t("sleep_lock_warning", game=friendly_name))
-            self._game_label.setStyleSheet("color: #ed8796; font-size: 24px; font-weight: bold; background: transparent; border: none;")
-        else:
-            self._game_label = QLabel(t("game_paused", game=friendly_name))
-            self._game_label.setStyleSheet("color: #000000; font-size: 20px; font-weight: bold; background: transparent; border: none;")
+        self._game_label = QLabel(t("game_paused", game=friendly_name))
+        self._game_label.setStyleSheet("color: #000000; font-size: 20px; font-weight: bold; background: transparent; border: none;")
             
         self._game_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self._game_label.setObjectName("game_label")
         left_pane.addWidget(self._game_label)
+        
+        if self._is_sleep_lock:
+            self._game_label.hide()
         
         left_pane.addStretch()
         
@@ -251,11 +234,7 @@ class LockScreen(QWidget):
         self._progress.setMaxValue(self._total_seconds)
         self._progress.setValue(self._total_seconds - self._global_elapsed_seconds)
         
-        
-        if self._is_sleep_lock and not self._is_soft_sleep_lock:
-            self._progress.hide()
-            self._bubble_frame.hide()
-            
+
         # Center the bubble and character
         char_layout = QVBoxLayout()
         char_layout.setAlignment(Qt.AlignCenter)
@@ -300,44 +279,26 @@ class LockScreen(QWidget):
                 title.setStyleSheet("color: #000000; font-size: 20px; font-weight: bold; margin-bottom: 8px; background: transparent; border: none;")
                 page_layout.addWidget(title)
                 
-                if group_data["type"] == "checklist":
-                    for group_id, item_id, text, is_done in group_data["items"]:
-                        item_container = QWidget()
-                        item_layout = QHBoxLayout(item_container)
-                        item_layout.setContentsMargins(0, 0, 0, 0)
-                        item_layout.setSpacing(12)
-                        
-                        cb = QCheckBox()
-                        cb.setObjectName("task_checkbox")
-                        cb.setChecked(is_done)
-                        
-                        lbl = QLabel(text)
-                        lbl.setWordWrap(True)
-                        lbl.setCursor(Qt.PointingHandCursor)
-                        
-                        if is_done:
-                            f = lbl.font()
-                            f.setStrikeOut(True)
-                            lbl.setFont(f)
-                            lbl.setStyleSheet("color: #888888; font-size: 22px; background: transparent; border: none;")
-                        else:
-                            lbl.setStyleSheet("color: #000000; font-size: 22px; background: transparent; border: none;")
-                            
-                        lbl.mousePressEvent = lambda event, cb_ref=cb, g_id=group_id, i_id=item_id, lbl_ref=lbl: cb_ref.setChecked(not cb_ref.isChecked()) or self._on_task_checked(g_id, i_id, cb_ref, lbl_ref)
-                        cb.clicked.connect(lambda checked, g_id=group_id, i_id=item_id, cb_ref=cb, lbl_ref=lbl: self._on_task_checked(g_id, i_id, cb_ref, lbl_ref))
-                        
-                        item_layout.addWidget(cb)
-                        item_layout.addWidget(lbl, 1)
-                        
-                        page_layout.addWidget(item_container)
-                else:
-                    lbl = QLabel(f'"{group_data["question"]}"')
-                    lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-                    lbl.setWordWrap(True)
-                    lbl.setStyleSheet("color: #000000; font-size: 20px; background: transparent; border: none;")
-                    page_layout.addWidget(lbl)
+                for group_id, item_id, text, is_done in group_data["items"]:
+                    item_container = QWidget()
+                    item_layout = QHBoxLayout(item_container)
+                    item_layout.setContentsMargins(0, 0, 0, 0)
+                    item_layout.setSpacing(12)
                     
-                page_layout.addStretch()
+                    cb = QCheckBox()
+                    cb.setObjectName("task_checkbox")
+                    cb.setChecked(is_done)
+                    
+                    lbl = QLabel(text)
+                    lbl.setWordWrap(True)
+                    lbl.setCursor(Qt.PointingHandCursor)
+                    
+                    if is_done:
+                        f = lbl.font()
+                        f.setStrikeOut(True)
+                        lbl.setFont(f)
+                        lbl.setStyleSheet("color: #888888; font-size: 22px; background: transparent; border: none;")
+                    page_layout.addStretch()
                 self._stacked_checklists.addWidget(page)
                 
             scroll_area = QScrollArea()

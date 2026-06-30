@@ -135,6 +135,20 @@ class GameDetector:
             return
 
         is_playing_whitelisted = False
+        
+        # Commonly auto-started launchers to ignore
+        ignore_list = {
+            "steam.exe", 
+            "epicgameslauncher.exe", 
+            "riotclientux.exe", 
+            "riotclientservices.exe",
+            "battle.net.exe",
+            "eadesktop.exe",
+            "origin.exe",
+            "upc.exe",
+            "ubisoftgameconnect.exe",
+            "gog galaxy.exe"
+        }
 
         for proc in psutil.process_iter(["name", "pid"]):
             try:
@@ -144,6 +158,10 @@ class GameDetector:
 
                 proc_name_lower = proc_name.lower()
                 proc_pid = proc.info["pid"]
+                
+                # Ignore common launchers
+                if proc_name_lower in ignore_list:
+                    continue
 
                 # Check if this process matches a game in our list
                 if proc_name_lower not in game_list:

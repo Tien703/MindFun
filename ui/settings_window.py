@@ -594,9 +594,6 @@ class SettingsWindow(QWidget):
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(12)
 
-        note = QLabel(t("question_note"))
-        note.setStyleSheet("color: #6c7086; font-style: italic;")
-        layout.addWidget(note)
 
         # Splitter layout (Groups on left, Tasks on right)
         split_layout = QHBoxLayout()
@@ -628,16 +625,6 @@ class SettingsWindow(QWidget):
         group_pane.addLayout(group_btn_layout)
         
         # Group Settings (Enabled & Checklist toggles)
-        self._cb_group_enabled = QCheckBox(t("cb_group_enabled"))
-        self._cb_group_enabled.clicked.connect(self._toggle_group_settings)
-        self._cb_group_enabled.setEnabled(False)
-        group_pane.addWidget(self._cb_group_enabled)
-
-        self._cb_group_checklist = QCheckBox(t("cb_group_checklist"))
-        self._cb_group_checklist.clicked.connect(self._toggle_group_settings)
-        self._cb_group_checklist.setEnabled(False)
-        group_pane.addWidget(self._cb_group_checklist)
-
         # Group Reorder Buttons
         group_reorder_layout = QHBoxLayout()
         btn_move_up = QPushButton(t("btn_move_up"))
@@ -701,11 +688,6 @@ class SettingsWindow(QWidget):
         
         # Reset right pane
         self._task_list.clear()
-        self._cb_group_enabled.setEnabled(False)
-        self._cb_group_enabled.setChecked(False)
-        self._cb_group_checklist.setEnabled(False)
-        self._cb_group_checklist.setChecked(False)
-
     def _on_group_selected(self, row: int):
         """Load tasks and settings for the selected group."""
         if row < 0:
@@ -715,13 +697,6 @@ class SettingsWindow(QWidget):
         if row < len(groups):
             group = groups[row]
             
-            # Update toggles
-            self._cb_group_enabled.setEnabled(True)
-            self._cb_group_enabled.setChecked(group.get("enabled", True))
-            
-            self._cb_group_checklist.setEnabled(True)
-            self._cb_group_checklist.setChecked(group.get("is_checklist", False))
-            
             # Update task list
             self._refresh_tasks(group)
 
@@ -729,22 +704,9 @@ class SettingsWindow(QWidget):
         self._task_list.clear()
         for item in group.get("items", []):
             text = item.get("text", "")
-            if group.get("is_checklist", False):
-                status = "[x] " if item.get("done", False) else "[ ] "
-                text = status + text
+            status = "[x] " if item.get("done", False) else "[ ] "
+            text = status + text
             self._task_list.addItem(text)
-
-    def _toggle_group_settings(self):
-        row = self._group_list.currentRow()
-        if row < 0:
-            return
-            
-        q_data, groups = self._get_current_lang_groups()
-        if row < len(groups):
-            groups[row]["enabled"] = self._cb_group_enabled.isChecked()
-            groups[row]["is_checklist"] = self._cb_group_checklist.isChecked()
-            save_questions(q_data)
-            self._refresh_tasks(groups[row]) # Refresh to show/hide [ ]
 
     def _add_group(self):
         text, ok = QInputDialog.getText(self, t("group_dialog_title"), "")
@@ -811,8 +773,6 @@ class SettingsWindow(QWidget):
         if row < 0: return
         
         q_data, groups = self._get_current_lang_groups()
-        groups[row]["enabled"] = self._cb_group_enabled.isChecked()
-        groups[row]["is_checklist"] = self._cb_group_checklist.isChecked()
         save_questions(q_data)
 
     def _add_task(self):
@@ -878,15 +838,12 @@ class SettingsWindow(QWidget):
     # ─── Tab 4: Violation Log ────────────────────────────────────────
 
     def _build_log_tab(self) -> QWidget:
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
-        
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        layout.setSpacing(12)
+        main_widget = QWidget()
+        main_layout = QVBoxLayout(main_widget)
+        main_layout.setContentsMargins(12, 12, 12, 12)
+        main_layout.setSpacing(12)
 
-        # Header controls (Range selection)
+        # Header controls (Fixed at the top)
         header_layout = QHBoxLayout()
         header_label = QLabel(t("log_chart_title"))
         header_label.setStyleSheet("font-weight: bold; font-size: 14px;")
@@ -898,14 +855,27 @@ class SettingsWindow(QWidget):
         self._range_combo.wheelEvent = lambda event: event.ignore()
         self._range_combo.currentIndexChanged.connect(self._refresh_log_chart)
         header_layout.addWidget(self._range_combo)
-        layout.addLayout(header_layout)
+        main_layout.addLayout(header_layout)
+
+        # Scroll area for the chart
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setSpacing(12)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
 
         # Bar Chart
         from ui.bar_chart import PlayTimeBarChart
         self._bar_chart = PlayTimeBarChart()
-        layout.addWidget(self._bar_chart, 1)
+        scroll_layout.addWidget(self._bar_chart, 1)
 
-        # Legend
+        scroll.setWidget(scroll_content)
+        main_layout.addWidget(scroll, 1)
+
+        # Legend (Fixed at the bottom)
         legend_layout = QHBoxLayout()
         legend_layout.addStretch()
         
@@ -919,17 +889,17 @@ class SettingsWindow(QWidget):
         
         self._viol_color = QWidget()
         self._viol_color.setFixedSize(12, 12)
-        self._viol_color.setStyleSheet("background-color: #8b3a3a; border-radius: 2px;")
+        self._viol_color.setStyleSheet("background-color: #ef4e4e; border-radius: 2px;")
         legend_layout.addWidget(self._viol_color)
         legend_layout.addWidget(QLabel(t("log_legend_viol")))
-        
         legend_layout.addStretch()
-        layout.addLayout(legend_layout)
+        
+        main_layout.addLayout(legend_layout)
 
-        self._refresh_log_chart()
+        # Initial data load
+        QTimer.singleShot(100, lambda: self._refresh_log_chart())
 
-        scroll.setWidget(widget)
-        return scroll
+        return main_widget
 
     def _refresh_log_chart(self):
         """Refresh the violation log chart."""
