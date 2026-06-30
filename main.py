@@ -143,7 +143,7 @@ class MindfunApp(QObject):
 
         # Chat head (Overlay Bubble)
         from ui.overlay_bubble import OverlayBubble
-        self._overlay_bubble = OverlayBubble(icon_path=self._icon_path)
+        self._overlay_bubble = OverlayBubble()
         self._overlay_bubble.on_double_click.connect(self._open_settings)
         self._overlay_bubble.on_right_click.connect(self._show_bubble_menu)
         self._overlay_bubble.on_single_click.connect(self._show_play_time_now)
