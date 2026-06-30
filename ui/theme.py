@@ -9,30 +9,34 @@ Accent colors:
 """
 
 def get_settings_style(is_dark: bool) -> str:
+    from core.config_manager import load_config
+    theme_cfg = load_config().get("theme", {})
+    
     if is_dark:
-        # Dark Mode Windows 11 Fluent
-        bg_window = "#202020"
-        bg_card = "#2D2D2D"
+        # Dark Mode
+        bg_window = theme_cfg.get("bg_dark", "#202020")
+        bg_card = theme_cfg.get("card_dark", "#2D2D2D")
         border_color = "#3E3E3E"
         text_primary = "#FFFFFF"
         text_secondary = "#A0A0A0"
-        accent_primary = "#f2b42c"      # Yellow
-        accent_success = "#b6f36d"      # Green (Save)
-        accent_success_hover = "#9bc855"
-        accent_danger = "#fe413c"       # Red
+        accent_primary = theme_cfg.get("primary_accent", "#f2b42c")
+        accent_success = theme_cfg.get("success_accent", "#b6f36d")
+        accent_danger = theme_cfg.get("danger_accent", "#fe413c")
         bg_hover = "#3E3E3E"
     else:
-        # Light Mode Windows 11 Fluent
-        bg_window = "#F3F3F3"
-        bg_card = "#FFFFFF"
+        # Light Mode
+        bg_window = theme_cfg.get("bg_light", "#F3F3F3")
+        bg_card = theme_cfg.get("card_light", "#FFFFFF")
         border_color = "#E5E5E5"
         text_primary = "#111111"
         text_secondary = "#5F5F5F"
-        accent_primary = "#f2b42c"      # Yellow
-        accent_success = "#b6f36d"      # Green (Save)
-        accent_success_hover = "#9bc855"
-        accent_danger = "#fe413c"       # Red
+        accent_primary = theme_cfg.get("primary_accent", "#f2b42c")
+        accent_success = theme_cfg.get("success_accent", "#b6f36d")
+        accent_danger = theme_cfg.get("danger_accent", "#fe413c")
         bg_hover = "#F6F6F6"
+        
+    accent_success_hover = accent_success # simplify
+
 
     return f"""
         QWidget {{ background-color: {bg_window}; color: {text_primary}; font-family: 'Segoe UI', 'Inter', sans-serif; font-size: 14px; }}
@@ -74,8 +78,8 @@ def get_settings_style(is_dark: bool) -> str:
         QComboBox::drop-down {{ border: none; width: 24px; }}
         QComboBox QAbstractItemView {{ background-color: {bg_card}; color: {text_primary}; border: 1px solid {border_color}; border-radius: 6px; selection-background-color: {bg_hover}; selection-color: {text_primary}; outline: none; }}
         
-        QGroupBox {{ color: {text_primary}; border: 1px solid {border_color}; border-radius: 8px; margin-top: 16px; padding-top: 18px; font-weight: 600; font-size: 14px; }}
-        QGroupBox::title {{ subcontrol-origin: margin; left: 16px; padding: 0 4px; background-color: transparent; }}
+        QGroupBox {{ color: {text_primary}; border: 1px solid {border_color}; border-radius: 8px; margin-top: 28px; padding-top: 16px; font-weight: 600; font-size: 14px; }}
+        QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; left: 16px; top: 0px; padding: 0px; background-color: transparent; }}
         
         QScrollArea {{ background-color: transparent; border: none; }}
         QScrollArea > QWidget > QWidget {{ background-color: transparent; }}
@@ -96,17 +100,20 @@ def get_settings_style(is_dark: bool) -> str:
     """
 
 def get_lockscreen_style(is_dark: bool) -> str:
-    accent_primary = "#f2b42c"
-    accent_success = "#b6f36d"
+    from core.config_manager import load_config
+    theme_cfg = load_config().get("theme", {})
+    
+    accent_primary = theme_cfg.get("primary_accent", "#f2b42c")
+    accent_success = theme_cfg.get("success_accent", "#b6f36d")
     
     if is_dark:
-        bg_card = "#202020"
+        bg_card = theme_cfg.get("card_dark", "#2D2D2D")
         border_color = "#3E3E3E"
         text_primary = "#FFFFFF"
         text_secondary = "#A0A0A0"
         bg_hover = "#2D2D2D"
     else:
-        bg_card = "#FFFFFF"
+        bg_card = theme_cfg.get("card_light", "#FFFFFF")
         border_color = "#E5E5E5"
         text_primary = "#111111"
         text_secondary = "#5F5F5F"
@@ -221,42 +228,50 @@ def get_lockscreen_style(is_dark: bool) -> str:
     """
 
 def get_tray_style(is_dark: bool) -> str:
+    from core.config_manager import load_config
+    theme_cfg = load_config().get("theme", {})
+    
     if is_dark:
-        return """
-            QMenu {
-                background-color: #2D2D2D;
+        bg_menu = theme_cfg.get("card_dark", "#2D2D2D")
+        return f"""
+            QMenu {{
+                background-color: {bg_menu};
                 color: #FFFFFF;
                 border: 1px solid #3E3E3E;
                 border-radius: 8px;
                 padding: 6px 0;
                 font-family: 'Segoe UI', 'Inter', sans-serif;
                 font-size: 14px;
-            }
-            QMenu::item { padding: 8px 32px 8px 24px; }
-            QMenu::item:selected { background-color: #3E3E3E; }
-            QMenu::item:disabled { color: #A0A0A0; }
-            QMenu::separator { height: 1px; background-color: #3E3E3E; margin: 4px 12px; }
+            }}
+            QMenu::item {{ padding: 8px 32px 8px 24px; }}
+            QMenu::item:selected {{ background-color: #3E3E3E; }}
+            QMenu::item:disabled {{ color: #A0A0A0; }}
+            QMenu::separator {{ height: 1px; background-color: #3E3E3E; margin: 4px 12px; }}
         """
     else:
-        return """
-            QMenu {
-                background-color: #FFFFFF;
+        bg_menu = theme_cfg.get("card_light", "#FFFFFF")
+        return f"""
+            QMenu {{
+                background-color: {bg_menu};
                 color: #111111;
                 border: 1px solid #E5E5E5;
                 border-radius: 8px;
                 padding: 6px 0;
                 font-family: 'Segoe UI', 'Inter', sans-serif;
                 font-size: 14px;
-            }
-            QMenu::item { padding: 8px 32px 8px 24px; }
-            QMenu::item:selected { background-color: #F6F6F6; }
-            QMenu::item:disabled { color: #5F5F5F; }
-            QMenu::separator { height: 1px; background-color: #E5E5E5; margin: 4px 12px; }
+            }}
+            QMenu::item {{ padding: 8px 32px 8px 24px; }}
+            QMenu::item:selected {{ background-color: #F6F6F6; }}
+            QMenu::item:disabled {{ color: #5F5F5F; }}
+            QMenu::separator {{ height: 1px; background-color: #E5E5E5; margin: 4px 12px; }}
         """
 
 def get_chart_colors(is_dark: bool) -> dict:
-    accent_danger = "#fe413c"
-    accent_success = "#b6f36d"
+    from core.config_manager import load_config
+    theme_cfg = load_config().get("theme", {})
+    
+    accent_danger = theme_cfg.get("danger_accent", "#fe413c")
+    accent_success = theme_cfg.get("success_accent", "#b6f36d")
     
     if is_dark:
         return {
@@ -276,16 +291,19 @@ def get_chart_colors(is_dark: bool) -> dict:
         }
 
 def get_settings_palette(is_dark: bool) -> dict:
+    from core.config_manager import load_config
+    theme_cfg = load_config().get("theme", {})
+    
     if is_dark:
         return {
             "desc_color": "#A0A0A0",
-            "desc_bg": "#2D2D2D",
+            "desc_bg": theme_cfg.get("card_dark", "#2D2D2D"),
             "text_color": "#FFFFFF"
         }
     else:
         return {
             "desc_color": "#5F5F5F",
-            "desc_bg": "#FFFFFF",
+            "desc_bg": theme_cfg.get("card_light", "#FFFFFF"),
             "text_color": "#111111"
         }
 

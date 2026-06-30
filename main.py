@@ -51,13 +51,14 @@ logger = logging.getLogger("mindfun")
 
 class AppSignals(QObject):
     game_detected = pyqtSignal(str, int, object, object)
+    play_time_tick = pyqtSignal(int)
 
 # ─── Application Class ──────────────────────────────────────────────
 
 class MindfunApp(QObject):
     """Main application controller."""
 
-    def __init__(self, show_settings=False):
+    def __init__(self, show_settings=False, test_onboarding=False):
         super().__init__()
         self._app = QApplication(sys.argv)
         self._app.setQuitOnLastWindowClosed(False)  # Keep running with just the tray
@@ -96,29 +97,57 @@ class MindfunApp(QObject):
 
         # ── Initialize components ──
 
+        self._icon_path = self._find_icon()
+        self._show_settings_on_start = show_settings
+
+        # Signals for cross-thread UI updates
+        self._signals = AppSignals()
+        self._signals.game_detected.connect(self._show_lockscreen)
+        self._signals.play_time_tick.connect(self._show_play_time_bubble)
+
+        self._settings: Optional[SettingsWindow] = None
+        self._detector = None
+        self._overlay_bubble = None
+        self._tray = None
+        self._night_guard = None
+
+        config = load_config()
+        if test_onboarding or not config.get("onboarding_completed", False):
+            from ui.onboarding_window import OnboardingWindow
+            self._onboarding = OnboardingWindow()
+            self._onboarding.on_finished.connect(self._start_services)
+            self._onboarding.show()
+        else:
+            self._start_services()
+
+    def _start_services(self):
+        """Start all background components and main UI (called after onboarding or immediately)."""
         # Game detector
-        self._detector = GameDetector(on_game_detected=self._on_game_detected)
-
-        # Determine icon path
-        icon_path = self._find_icon()
-
+        self._detector = GameDetector(
+            on_game_detected=self._on_game_detected,
+            on_play_time_tick=self._on_play_time_tick_callback
+        )
+        
         # Tray icon
+        from ui.tray_icon import TrayIcon
         self._tray = TrayIcon(
-            icon_path=icon_path,
+            icon_path=self._icon_path,
             on_open_settings=self._open_settings,
             on_view_log=self._view_log,
             on_pause_today=self._pause_today,
             on_resume=self._resume,
             on_quit=self._quit,
             on_reset_whitelist=self._detector.reset_whitelist,
+            on_toggle_chat_head=self._toggle_chat_head,
         )
 
-        # Settings window (lazy, created once)
-        self._settings: Optional[SettingsWindow] = None
-
-        # Signals for cross-thread UI updates
-        self._signals = AppSignals()
-        self._signals.game_detected.connect(self._show_lockscreen)
+        # Chat head (Overlay Bubble)
+        from ui.overlay_bubble import OverlayBubble
+        self._overlay_bubble = OverlayBubble(icon_path=self._icon_path)
+        self._overlay_bubble.on_double_click.connect(self._open_settings)
+        self._overlay_bubble.on_right_click.connect(self._show_bubble_menu)
+        self._overlay_bubble.on_single_click.connect(self._show_play_time_now)
+        self._overlay_bubble.show()
 
         # Night guard
         self._night_guard = NightGuard(
@@ -130,9 +159,13 @@ class MindfunApp(QObject):
             ),
         )
 
-        if show_settings:
+        if self._show_settings_on_start:
             # We must use a timer to show it after event loop starts
             QTimer.singleShot(500, self._open_settings)
+            
+        self._detector.start()
+        self._night_guard.start()
+        self._tray.show()
 
     def _find_icon(self) -> str:
         """Find the application icon file."""
@@ -155,19 +188,15 @@ class MindfunApp(QObject):
         except Exception as e:
             logger.warning("Startup registration failed (non-fatal): %s", e)
 
-        # Start detection
-        self._detector.start()
-        self._night_guard.start()
-
-        # Show tray icon
-        self._tray.show()
-
-        logger.info("All components started, entering event loop")
+        # Components are started in _start_services()
+        logger.info("All components started (or waiting for onboarding), entering event loop")
         exit_code = self._app.exec_()
 
         # Cleanup
-        self._detector.stop()
-        self._night_guard.stop()
+        if self._detector:
+            self._detector.stop()
+        if self._night_guard:
+            self._night_guard.stop()
         logger.info("═══ Mindfun stopped ═══")
 
         return exit_code
@@ -182,6 +211,75 @@ class MindfunApp(QObject):
         """
         logger.info("Game detected: %s (PID %d)", game_exe, game_pid)
         self._signals.game_detected.emit(game_exe, game_pid, launcher_exe, launcher_pid)
+
+    def _on_play_time_tick_callback(self, mins: int):
+        from core.i18n import t
+        if self._overlay_bubble:
+            msg = t("bubble_play_time", mins=mins)
+            self._overlay_bubble.show_message(msg, 5000)
+
+    @pyqtSlot(int)
+    def _show_play_time_bubble(self, minutes: int):
+        """Show the overlay bubble (runs on Qt main thread)."""
+        msg = t("bubble_play_time_alert", minutes=minutes)
+        logger.info(f"Showing play time bubble: {minutes} mins")
+        self._overlay_bubble.show_message(msg, 15000)
+
+    def _show_bubble_menu(self, global_pos):
+        from PyQt5.QtWidgets import QMenu
+        from core.i18n import t
+        from core.config_manager import load_config
+        menu = QMenu()
+        menu.setStyleSheet("""
+            QMenu { background: #2c2c2c; color: white; border: 1px solid #444; border-radius: 6px; padding: 4px; font-family: 'Segoe UI'; font-size: 13px; }
+            QMenu::item { padding: 6px 24px; border-radius: 4px; }
+            QMenu::item:selected { background: #3c3c3c; }
+        """)
+        
+        act_settings = menu.addAction(t("tray_open_settings"))
+        
+        # Pause / Resume logic based on game detector
+        is_paused = self._detector.is_paused()
+        act_pause = None
+        act_resume = None
+        if is_paused:
+            act_resume = menu.addAction(t("tray_resume"))
+        else:
+            act_pause = menu.addAction(t("tray_pause_today"))
+            
+        act_hide = menu.addAction(t("bubble_hide"))
+        menu.addSeparator()
+        act_quit = menu.addAction(t("tray_quit"))
+        
+        action = menu.exec_(global_pos)
+        
+        if action == act_settings:
+            self._open_settings()
+        elif action == act_pause:
+            self._pause_today()
+        elif action == act_resume:
+            self._resume()
+        elif action == act_hide:
+            self._overlay_bubble.hide()
+        elif action == act_quit:
+            self._quit()
+            
+    def _toggle_chat_head(self):
+        if self._overlay_bubble.isHidden():
+            self._overlay_bubble.show()
+        else:
+            self._overlay_bubble.hide()
+            
+    @pyqtSlot()
+    def _show_play_time_now(self):
+        from core.report_logger import get_daily_stats
+        from datetime import datetime
+        today = datetime.now().strftime("%Y-%m-%d")
+        stats = get_daily_stats()
+        seconds = stats.get(today, {}).get("total_seconds", 0)
+        mins = seconds // 60
+        msg = t("bubble_play_time", mins=mins)
+        self._overlay_bubble.show_message(msg, 5000)
 
     @pyqtSlot(str, int, bool)
     def _show_sleep_lockscreen(self, game_exe: str, game_pid: int, is_soft: bool = False):
@@ -298,6 +396,17 @@ class MindfunApp(QObject):
 
     def _show_toast(self, title: str, message: str):
         """Show a toast notification via the tray icon."""
+        config = load_config()
+        sound_cfg = config.get("sound", {})
+        if sound_cfg.get("play_notification", True):
+            sound_path = sound_cfg.get("notification_sound", "")
+            if sound_path:
+                try:
+                    import winsound
+                    winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                except Exception as e:
+                    logger.error("Failed to play sound: %s", e)
+                    
         try:
             # Try winotify first for persistent notifications
             from winotify import Notification
@@ -359,6 +468,14 @@ class MindfunApp(QObject):
 
     def _pause_today(self):
         """Pause game detection for today."""
+        from core.config_manager import load_config
+        from PyQt5.QtWidgets import QMessageBox
+        
+        is_anti_cheat = load_config().get("anti_cheat", True)
+        if is_anti_cheat:
+            QMessageBox.warning(None, t("anti_cheat_title"), t("anti_cheat_pause_warning"))
+            return
+            
         self._detector.pause()
         self._tray.set_paused(True)
         logger.info("Mindfun paused for today")
@@ -371,9 +488,18 @@ class MindfunApp(QObject):
 
     def _quit(self):
         """Clean quit."""
+        from core.config_manager import load_config
+        from PyQt5.QtWidgets import QMessageBox
+        
+        is_anti_cheat = load_config().get("anti_cheat", True)
+        if is_anti_cheat:
+            QMessageBox.warning(None, t("anti_cheat_title"), t("anti_cheat_warning"))
+            return
+            
         logger.info("User requested quit")
         self._detector.stop()
         self._night_guard.stop()
+        self._app.quit()
 
 
 # ─── Entry Point ─────────────────────────────────────────────────────
@@ -381,9 +507,10 @@ class MindfunApp(QObject):
 def main():
     parser = argparse.ArgumentParser(description="Mindfun — Behavioral Friction for Gaming")
     parser.add_argument("--settings", action="store_true", help="Show settings window on startup")
+    parser.add_argument("--test-onboarding", action="store_true", help="Force show the onboarding window for testing")
     args = parser.parse_args()
 
-    app = MindfunApp(show_settings=args.settings)
+    app = MindfunApp(show_settings=args.settings, test_onboarding=args.test_onboarding)
     sys.exit(app.run())
 
 

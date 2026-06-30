@@ -8,9 +8,9 @@ Provides Vietnamese/English language switching for all UI strings.
 STRINGS = {
     "vi": {
         # Lockscreen
-        "game_paused": "Paused: {game}",
-        "seconds_remaining": "Wait {seconds}s",
-        "unfinished_tasks_prompt": "Pending Tasks:",
+        "game_paused": "Tạm dừng: {game}",
+        "seconds_remaining": "Chờ {seconds}s",
+        "unfinished_tasks_prompt": "Nhiệm vụ chưa hoàn thành:",
         "unfinished_tasks_ask": "Bạn vẫn còn công việc chưa xong. Bạn có tiếp tục chơi không?",
         "sleep_lock_warning": "Đã quá giờ đi ngủ. Hãy tắt {game} để bảo vệ sức khỏe!",
         "soft_sleep_lock_warning": "Đã đến giờ đi ngủ. Bạn có chắc chắn muốn tiếp tục chơi {game}?",
@@ -33,13 +33,29 @@ STRINGS = {
         "tray_quit": "Thoát Mindfun",
         "tray_reset_whitelist": "Xóa lịch sử cho phép",
         "tray_about": "Giới thiệu",
+        "tray_toggle_bubble": "Bật / Tắt Bong Bóng",
+
+        # Bubble / Chat head
+        "bubble_hide": "Ẩn bong bóng (Chat Head)",
+        "bubble_play_time": "Hôm nay bạn đã chơi game tổng cộng {mins} phút.",
+        "bubble_play_time_alert": "Bạn đã chơi game được {minutes} phút rồi, hãy nghỉ ngơi một chút nhé!",
+
+        # Anti-cheat
+        "anti_cheat_title": "Anti-Cheat",
+        "anti_cheat_warning": "Chế độ Chặn thoát nhanh (Anti-Cheat) đang bật.\nBạn không thể thoát MindFun. Hãy vào Cài Đặt để tắt chế độ này nếu bạn thực sự muốn thoát!",
+        "anti_cheat_pause_warning": "Chế độ Chặn thoát nhanh (Anti-Cheat) đang bật.\nBạn không thể tạm dừng MindFun. Hãy vào Cài Đặt để tắt chế độ này nếu cần.",
+
+        # Chart tooltips
+        "chart_total": "Tổng: {total_h:.1f}h",
+        "chart_valid": "Hợp lệ: {valid_h:.1f}h",
+        "chart_viol": "Quá giờ: {viol_h:.1f}h",
 
         # Settings tabs
         "settings_title": "Mindfun — Cài Đặt",
         "tab_commitment": "Mức Độ Cam Kết",
         "tab_games": "Danh Sách Game",
         "tab_questions": "Câu Hỏi Thức Tỉnh",
-        "tab_log": "Nhật Ký ",
+        "tab_log": "Nhật Ký",
         "tab_settings": "Cài đặt chung",
 
         # Settings — General
@@ -53,16 +69,16 @@ STRINGS = {
 
         # Mode descriptions
         "mode_1_name": "Nhắc nhở (15 giây)",
-        "mode_1_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 15s</li><li>🌙 <b>Khóa giờ ngủ (Sleep lock):</b> Nhắc nhở</li><li>📋 <b>Công việc chưa xong:</b> Nhắc nhở</li></ul>",
+        "mode_1_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 15s</li><li>🌙 <b>Khóa giờ ngủ:</b> Nhắc nhở</li><li>📋 <b>Công việc chưa xong:</b> Nhắc nhở</li></ul>",
         "mode_2_name": "Kỷ luật (1 phút)",
-        "mode_2_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 1m</li><li>🌙 <b>Khóa giờ ngủ (Sleep lock):</b> Nhắc nhở</li><li>📋 <b>Công việc chưa xong:</b> Nhắc nhở</li></ul>",
+        "mode_2_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 1m</li><li>🌙 <b>Khóa giờ ngủ:</b> Nhắc nhở</li><li>📋 <b>Công việc chưa xong:</b> Nhắc nhở</li></ul>",
         "mode_3_name": "Cai nghiện (3 phút)",
-        "mode_3_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 3m</li><li>🌙 <b>Khóa giờ ngủ (Sleep lock):</b> <span style='color:#ed8796;font-weight:bold;'>Khóa màn hình (Overlay)</span></li><li>📋 <b>Công việc chưa xong:</b> Nhắc nhở</li></ul>",
+        "mode_3_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 3m</li><li>🌙 <b>Khóa giờ ngủ:</b> <span style='color:#ed8796;font-weight:bold;'>Khóa màn hình</span></li><li>📋 <b>Công việc chưa xong:</b> Nhắc nhở</li></ul>",
         "mode_4_name": "Thiết quân luật (5 phút)",
-        "mode_4_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 5m</li><li>🌙 <b>Khóa giờ ngủ (Sleep lock):</b> <span style='color:#ed8796;font-weight:bold;'>Khóa màn hình (Overlay)</span></li><li>📋 <b>Công việc chưa xong:</b> <span style='color:#ed8796;font-weight:bold;'>Khóa màn hình (Overlay)</span></li></ul>",
+        "mode_4_desc": "<b>Cấu hình:</b><ul style='margin-top: 4px; margin-bottom: 0px;'><li>⏳ <b>Thời gian chờ:</b> 5m</li><li>🌙 <b>Khóa giờ ngủ:</b> <span style='color:#ed8796;font-weight:bold;'>Khóa màn hình</span></li><li>📋 <b>Công việc chưa xong:</b> <span style='color:#ed8796;font-weight:bold;'>Khóa màn hình</span></li></ul>",
         "mode_5_name": "Tùy chỉnh (Custom)",
         "mode_5_desc": "<b>Cấu hình:</b><br>Bạn có thể tự cấu hình thời gian đếm ngược và chọn chế độ Nhắc nhở/Khóa màn hình một cách độc lập.",
-        
+
         "label_custom_duration": "Thời gian chờ (giây):",
         "label_custom_sleep": "Khóa giờ ngủ (Sleep Lock):",
         "label_custom_task": "Công việc chưa xong (Task Lock):",
@@ -103,8 +119,18 @@ STRINGS = {
         "log_minutes_suffix": "phút",
 
         # Settings — Language
-        "label_language": "Ngôn ngữ ",
-        
+        "label_language": "Ngôn ngữ",
+
+        # Settings - Theme & Sound
+        "label_theme": "Giao diện (Theme)",
+        "label_primary_color": "Màu chủ đạo (Primary Accent):",
+        "btn_pick_color": "Chọn màu",
+        "label_sound": "Âm thanh",
+        "label_checklist_sound": "Âm thanh hoàn thành Checklist:",
+        "label_notif_sound": "Âm thanh Thông báo:",
+        "opt_custom_sound": "Tùy chọn khác (Custom)...",
+        "btn_browse": "Duyệt...",
+
         "group_preset_games": "Game hệ thống (Preset)",
         "group_custom_games": "Game tùy chỉnh (Custom)",
         "btn_move_up": "▲ Lên",
@@ -117,7 +143,6 @@ STRINGS = {
         "log_legend_viol": "Giờ chơi đêm (Vi phạm)",
         "lang_vietnamese": "Tiếng Việt",
         "lang_english": "English",
-
 
         # Night guard toasts
         "toast_night_report": "Báo cáo: Vừa rồi bạn đã thức muộn chơi {game} khoảng {minutes} phút. Hãy chú ý giữ gìn sức khỏe nhé!",
@@ -144,7 +169,32 @@ STRINGS = {
         "confirm_pause": "Tạm dừng Mindfun trong ngày hôm nay?\nMindfun sẽ tự bật lại vào 05:00 sáng mai.",
         "confirm_disable_ac_title": "Cảnh báo",
         "confirm_disable_ac_text": "Bạn có chắc chắn muốn tắt chế độ Anti-Cheat không?\n\nViệc này sẽ gỡ bỏ lớp bảo vệ của Mindfun, khiến bạn dễ dàng bị khuất phục bởi xung động nhất thời và có thể sẽ phải hối hận vì mất kiểm soát.\n\nBạn vẫn muốn tắt chứ?",
+
+        # Onboarding
+        "onb_lang_title": "Chọn ngôn ngữ",
+        "onb_lang_desc": "Bạn muốn sử dụng ngôn ngữ nào cho MindFun?",
+        "onb_title": "Chào mừng đến với MindFun",
+        "onb_desc": "Đây là lần đầu tiên bạn mở ứng dụng.\nBạn có muốn chạy Trình hướng dẫn thiết lập không?",
+        "onb_yes": "Có, hãy hướng dẫn tôi",
+        "onb_no": "Không, để tôi tự khám phá",
+        "onb_step1": "Bước 1: Chọn mức độ cam kết",
+        "onb_step1_desc": "Mức độ cam kết quyết định độ khó của hệ thống và thời gian tự ý thức.",
+        "onb_step2": "Bước 2: Thêm Game cần quản lý",
+        "onb_step2_desc": "MindFun sẽ chặn và yêu cầu bạn rèn luyện não trước khi mở những game này.",
+        "onb_add_game": "Chọn File Game",
+        "onb_finish_title": "Hoàn tất thiết lập!",
+        "onb_finish_desc": "MindFun đã sẵn sàng bảo vệ thời gian của bạn.\nHãy bấm Bắt đầu để trải nghiệm!",
+        "onb_btn_next": "Tiếp theo",
+        "onb_btn_back": "Quay lại",
+        "onb_btn_start": "Bắt đầu",
+        "onb_btn_skip": "Bỏ qua",
+        "onb_btn_browse": "Duyệt tìm File (.exe)",
+        "onb_mode1_desc": "Vài giây ngắn đủ để bạn tự ý thức.",
+        "onb_mode2_desc": "Thời gian dài hơn, ý thức tốt hơn.",
+        "onb_mode3_desc": "Hệ thống sẽ khó hơn, bạn sẽ tự ý thức được.",
+        "onb_mode4_desc": "Không dành cho người không muốn bỏ game!",
     },
+
     "en": {
         # Lockscreen
         "game_paused": "Paused: {game}",
@@ -172,6 +222,22 @@ STRINGS = {
         "tray_quit": "Quit Mindfun",
         "tray_reset_whitelist": "Lock Game (Clear history)",
         "tray_about": "About",
+        "tray_toggle_bubble": "Toggle Chat Bubble",
+
+        # Bubble / Chat head
+        "bubble_hide": "Hide Chat Head",
+        "bubble_play_time": "You have played for {mins} minutes today.",
+        "bubble_play_time_alert": "You have been playing for {minutes} minutes. Take a break!",
+
+        # Anti-cheat
+        "anti_cheat_title": "Anti-Cheat",
+        "anti_cheat_warning": "Anti-Cheat (Friction Lock) is enabled.\nYou cannot quit MindFun. Please disable this mode in Settings if you really want to quit!",
+        "anti_cheat_pause_warning": "Anti-Cheat (Friction Lock) is enabled.\nYou cannot pause MindFun. Please disable this mode in Settings if needed.",
+
+        # Chart tooltips
+        "chart_total": "Total: {total_h:.1f}h",
+        "chart_valid": "Valid: {valid_h:.1f}h",
+        "chart_viol": "Over: {viol_h:.1f}h",
 
         # Settings tabs
         "settings_title": "Mindfun — Settings",
@@ -202,36 +268,36 @@ STRINGS = {
         "mode_5_name": "Custom Mode",
         "mode_5_desc": "<b>Config:</b><br>Freely adjust the wait time (seconds) and choose lockscreen behaviors independently.",
 
-        "label_custom_duration": "Wait time (seconds):",
+        "label_custom_duration": "Wait Time (seconds):",
         "label_custom_sleep": "Sleep Lock:",
-        "label_custom_task": "Incomplete Tasks (Task Lock):",
-        "opt_remind": "Remind Only",
+        "label_custom_task": "Unfinished Task Lock:",
+        "opt_remind": "Remind",
         "opt_lock": "Lockscreen",
 
         # Settings — Games tab
         "add_game_placeholder": "GameName.exe",
         "btn_add": "+ Add",
         "btn_delete": "Delete",
-        "btn_save": "Save changes",
-        "btn_save_list": "Save list",
+        "btn_save": "Save Changes",
+        "btn_save_list": "Save List",
         "msg_saved": "Settings saved successfully!",
         "btn_manage_games": "Manage Game List",
-        "placeholder_search_game": "Search games...",
+        "placeholder_search_game": "Search game...",
         "title_game_manager": "Game Manager",
         "placeholder_custom_name": "Game Name (e.g. Minecraft)",
-        "placeholder_custom_exe": "Executable (e.g. javaw.exe)",
+        "placeholder_custom_exe": "File name (e.g. javaw.exe)",
 
         # Settings — Questions tab
         "btn_edit": "Edit",
-        "btn_add_question": "+ Add new question",
+        "btn_add_question": "+ Add New Question",
         "btn_cancel": "Cancel",
         "question_dialog_title": "Add/Edit Question",
-        "question_note": "Groups with 'Checklist' enabled will ask you to check off items. Others will pick a random question.",
+        "question_note": "Groups in 'Checklist' mode require you to tick off items. Other groups pick one question at random.",
         "btn_add_group": "+ Add Group",
         "btn_edit_group": "Edit Group",
         "group_dialog_title": "Group Name",
         "cb_group_enabled": "Enable this group",
-        "cb_group_checklist": "Use as Checklist (instead of random questions)",
+        "cb_group_checklist": "Use as Checklist (Instead of random pick)",
 
         # Settings — Log tab
         "log_col_date": "Date",
@@ -239,40 +305,47 @@ STRINGS = {
         "log_col_start": "Start Time",
         "log_col_minutes": "Minutes Over",
         "btn_clear_log": "Clear All Logs",
-        "log_minutes_suffix": "min",
+        "log_minutes_suffix": "mins",
 
         # Settings — Language
         "label_language": "Language",
-        
 
-        "group_preset_games": "Preset Games",
+        # Settings - Theme & Sound
+        "label_theme": "Theme",
+        "label_primary_color": "Primary Accent Color:",
+        "btn_pick_color": "Pick Color",
+        "label_sound": "Sound",
+        "label_checklist_sound": "Checklist Complete Sound:",
+        "label_notif_sound": "Notification Sound:",
+        "opt_custom_sound": "Custom...",
+        "btn_browse": "Browse...",
+
+        "group_preset_games": "System Games (Preset)",
         "group_custom_games": "Custom Games",
         "btn_move_up": "▲ Up",
         "btn_move_down": "▼ Down",
-        "log_chart_title": "Playtime Statistics:",
+        "log_chart_title": "Play Time Statistics:",
         "log_range_7": "7 Days",
         "log_range_14": "14 Days",
         "log_range_30": "30 Days",
-        "log_legend_valid": "Valid Playtime",
-        "log_legend_viol": "Night Playtime (Violation)",
+        "log_legend_valid": "Valid Play Time",
+        "log_legend_viol": "Late Night Play (Violation)",
         "lang_vietnamese": "Tiếng Việt",
         "lang_english": "English",
-        "lang_english": "English",
-
 
         # Night guard toasts
-        "toast_night_report": "Report: Last night you played {game} for ~{minutes} minutes. Take care of your health!",
-        "toast_night_remind": "You are playing games during sleep hours. This violation will be recorded!",
-        "toast_hardcore_kill": "⚠️ Mindfun locked your screen. It's past {time}.\nPlease turn off your PC and sleep.",
+        "toast_night_report": "Report: You stayed up late playing {game} for about {minutes} minutes. Please take care of your health!",
+        "toast_night_remind": "You are playing games during your sleep hours. The system will record this violation.",
+        "toast_hardcore_kill": "⚠️ Mindfun has locked your game screen. It's past {time}.\nPlease shut down and go to sleep.",
         "toast_title": "Mindfun",
 
         # About
         "about_title": "About Mindfun",
         "about_text": (
             "Mindfun v1.0.0\n\n"
-            "No bans — just a mindful pause.\n\n"
+            "No bans — just mindful pauses.\n\n"
             "Philosophy: Behavioral Friction — creating just enough\n"
-            "resistance for reason to awaken before impulse wins.\n\n"
+            "friction for reason to awaken before impulse wins.\n\n"
             "Local-only. No data sent over the network.\n"
             "Open Source."
         ),
@@ -282,9 +355,33 @@ STRINGS = {
         "confirm_yes": "Yes",
         "confirm_no": "No",
         "confirm_title": "Confirm",
-        "confirm_pause": "Pause Mindfun for today?\nMindfun will resume at 05:00 AM tomorrow.",
+        "confirm_pause": "Pause Mindfun for today?\nMindfun will automatically resume at 5:00 AM tomorrow.",
         "confirm_disable_ac_title": "Warning",
-        "confirm_disable_ac_text": "Are you sure you want to disable Anti-Cheat mode?\n\nThis will remove Mindfun's protection layer, making it easy for you to give in to temporary impulses and potentially regret losing self-control.\n\nDo you still want to disable it?",
+        "confirm_disable_ac_text": "Are you sure you want to disable Anti-Cheat?\n\nThis removes Mindfun's protection layer, making it easy to give in to impulsive urges.\n\nDo you still want to disable it?",
+
+        # Onboarding
+        "onb_lang_title": "Choose Language",
+        "onb_lang_desc": "Which language would you like to use for MindFun?",
+        "onb_title": "Welcome to MindFun",
+        "onb_desc": "This is your first time opening the app.\nWould you like to run the Setup Wizard?",
+        "onb_yes": "Yes, guide me",
+        "onb_no": "No, let me explore",
+        "onb_step1": "Step 1: Choose Commitment Level",
+        "onb_step1_desc": "The commitment level determines the system's strictness and your mindfulness time.",
+        "onb_step2": "Step 2: Add Games to Manage",
+        "onb_step2_desc": "MindFun will block and require a brain workout before launching these games.",
+        "onb_add_game": "Select Game File",
+        "onb_finish_title": "Setup Complete!",
+        "onb_finish_desc": "MindFun is ready to protect your time.\nClick Start to experience it!",
+        "onb_btn_next": "Next",
+        "onb_btn_back": "Back",
+        "onb_btn_start": "Start",
+        "onb_btn_skip": "Skip",
+        "onb_btn_browse": "Browse (.exe)",
+        "onb_mode1_desc": "A few seconds for self-awareness.",
+        "onb_mode2_desc": "Longer delay for better mindfulness.",
+        "onb_mode3_desc": "Stricter system to enforce self-awareness.",
+        "onb_mode4_desc": "Not for those who don't want to quit!",
     },
 }
 
@@ -307,7 +404,6 @@ def set_language(lang_code: str):
         _current_lang = lang_code
 
 
-
 def t(key: str, **kwargs) -> str:
     """
     Translate a string key to the current language.
@@ -316,7 +412,7 @@ def t(key: str, **kwargs) -> str:
         t("game_paused", game="League of Legends")
         t("btn_quit")
     """
-    lang = "en" if key.startswith("toast_") else _current_lang
+    lang = _current_lang
     text = STRINGS.get(lang, STRINGS["vi"]).get(key, key)
     if kwargs:
         try:
