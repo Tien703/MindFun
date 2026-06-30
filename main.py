@@ -273,6 +273,7 @@ class MindfunApp(QObject):
     @pyqtSlot()
     def _show_play_time_now(self):
         from core.report_logger import get_daily_stats
+        from core.i18n import t
         from datetime import datetime
         today = datetime.now().strftime("%Y-%m-%d")
         stats = get_daily_stats()
@@ -469,6 +470,7 @@ class MindfunApp(QObject):
     def _pause_today(self):
         """Pause game detection for today."""
         from core.config_manager import load_config
+        from core.i18n import t
         from PyQt5.QtWidgets import QMessageBox
         
         is_anti_cheat = load_config().get("anti_cheat", True)
@@ -489,6 +491,7 @@ class MindfunApp(QObject):
     def _quit(self):
         """Clean quit."""
         from core.config_manager import load_config
+        from core.i18n import t
         from PyQt5.QtWidgets import QMessageBox
         
         is_anti_cheat = load_config().get("anti_cheat", True)
