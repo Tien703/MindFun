@@ -27,6 +27,7 @@ from PyQt5.QtGui import QColor, QLinearGradient, QPainter
 
 from core.i18n import t, get_mode_duration
 from core.config_manager import load_config, load_questions, save_questions
+from ui.progress_character import ProgressCharacter
 
 logger = logging.getLogger("mindfun.lockscreen")
 
@@ -215,21 +216,24 @@ class LockScreen(QWidget):
         content_layout.addWidget(self._game_label)
         content_layout.addSpacing(50)
 
-        # ── Progress bar ──
-        self._progress = QProgressBar()
-        self._progress.setMinimum(0)
+        # ── Progress Character ──
+        self._progress = ProgressCharacter()
         if self._group_times:
             self._progress.setMaximum(self._group_times[self._current_group_index])
         else:
             self._progress.setMaximum(self._total_seconds)
             
         self._progress.setValue(self._remaining)
-        self._progress.setTextVisible(False)
-        self._progress.setFixedHeight(8)
         self._progress.setObjectName("countdown_progress")
         if self._is_sleep_lock and not self._is_soft_sleep_lock:
             self._progress.hide()
-        content_layout.addWidget(self._progress)
+            
+        char_layout = QHBoxLayout()
+        char_layout.addStretch()
+        char_layout.addWidget(self._progress)
+        char_layout.addStretch()
+        
+        content_layout.addLayout(char_layout)
         content_layout.addSpacing(16)
 
         # ── Countdown text ──
@@ -792,3 +796,4 @@ class LockScreen(QWidget):
         painter.setPen(Qt.NoPen)
         painter.drawRoundedRect(self.rect(), 16, 16)
         super().paintEvent(event)
+        

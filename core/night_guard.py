@@ -12,7 +12,7 @@ Also handles the 05:00 daily reset of whitelisted_session.
 import logging
 import threading
 import time
-from datetime import datetime, time as dt_time
+from datetime import datetime, time as dt_time, timedelta
 from typing import Callable, Optional
 
 import psutil
@@ -45,6 +45,34 @@ def is_night_time() -> bool:
         return now >= night_start or now < day_start
     else:
         return night_start <= now < day_start
+
+
+def get_night_start_timestamp() -> float:
+    """Calculate the timestamp of the current night's start time."""
+    config = load_config()
+    try:
+        night_h, night_m = map(int, config.get("night_start", "23:00").split(":"))
+        day_h, day_m = map(int, config.get("day_start", "05:00").split(":"))
+    except (ValueError, AttributeError):
+        night_h, night_m = 23, 0
+        day_h, day_m = 5, 0
+
+    now = datetime.now()
+    night_start = dt_time(night_h, night_m)
+    day_start = dt_time(day_h, day_m)
+
+    if night_start > day_start:
+        if now.time() < day_start:
+            # Wrap around midnight: we are past midnight, so night_start was yesterday
+            start_dt = now.replace(hour=night_h, minute=night_m, second=0, microsecond=0) - timedelta(days=1)
+        else:
+            # Wrap around midnight: we are before midnight, so night_start is today
+            start_dt = now.replace(hour=night_h, minute=night_m, second=0, microsecond=0)
+    else:
+        # No wrap around: night_start is today
+        start_dt = now.replace(hour=night_h, minute=night_m, second=0, microsecond=0)
+
+    return start_dt.timestamp()
 
 
 class NightGuard:
@@ -169,14 +197,24 @@ class NightGuard:
                             self._on_night_lockdown(game_lower, pid, False)
                     else:
                         # Mode 1-2 (or Custom with soft sleep lock): Soft sleep lockscreen + Toast remind
+                        try:
+                            proc = psutil.Process(pid)
+                            was_running_before_bedtime = proc.create_time() < get_night_start_timestamp()
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            was_running_before_bedtime = False
+
                         logger.info("Night violation: %s (PID %d), mode %d — soft lockdown", game_lower, pid, mode)
                         session_index = report_logger.start_session(game_lower, night_start)
                         self._on_toast(
                             t("toast_title"),
                             t("toast_night_remind")
                         )
-                        if self._on_night_lockdown:
-                            self._on_night_lockdown(game_lower, pid, True)
+
+                        if was_running_before_bedtime:
+                            logger.info("SOFT SLEEP LOCK: %s was already running before bedtime. Skipping Lockscreen.", game_lower)
+                        else:
+                            if self._on_night_lockdown:
+                                self._on_night_lockdown(game_lower, pid, True)
 
                     # Track the session to prevent repeated triggers
                     self._active_sessions[game_lower] = {
