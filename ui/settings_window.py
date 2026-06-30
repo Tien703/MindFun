@@ -309,23 +309,6 @@ class SettingsWindow(QWidget):
         self._dark_mode_cb.setChecked(config.get("dark_mode", True))
         theme_layout.addWidget(self._dark_mode_cb)
         
-        # Primary Color Picker
-        color_layout = QHBoxLayout()
-        color_layout.addWidget(QLabel(t("label_primary_color")))
-        
-        self._color_preview = QWidget()
-        self._color_preview.setFixedSize(24, 24)
-        theme_cfg = config.get("theme", {})
-        self._current_primary_color = theme_cfg.get("primary_accent", "#f2b42c")
-        self._color_preview.setStyleSheet(f"background-color: {self._current_primary_color}; border: 1px solid #777; border-radius: 4px;")
-        color_layout.addWidget(self._color_preview)
-        
-        btn_pick_color = QPushButton(t("btn_pick_color"))
-        btn_pick_color.clicked.connect(self._pick_primary_color)
-        color_layout.addWidget(btn_pick_color)
-        color_layout.addStretch()
-        
-        theme_layout.addLayout(color_layout)
         layout.addWidget(group_theme)
         
         # Sound Customization
@@ -463,11 +446,6 @@ class SettingsWindow(QWidget):
                 self._anti_cheat_cb.setChecked(True)
                 self._anti_cheat_cb.blockSignals(False)
 
-    def _pick_primary_color(self):
-        color = QColorDialog.getColor(QColor(self._current_primary_color), self, t("btn_pick_color"))
-        if color.isValid():
-            self._current_primary_color = color.name()
-            self._color_preview.setStyleSheet(f"background-color: {self._current_primary_color}; border: 1px solid #777; border-radius: 4px;")
 
     def _on_checklist_sound_changed(self, index):
         if index < 5:
@@ -513,13 +491,7 @@ class SettingsWindow(QWidget):
             self._apply_dynamic_colors(dark_checked)
             changed = True
             
-        theme_cfg = config.get("theme", {})
-        if theme_cfg.get("primary_accent") != self._current_primary_color:
-            theme_cfg["primary_accent"] = self._current_primary_color
-            config["theme"] = theme_cfg
-            changed = True
-            self.setStyleSheet(theme.get_settings_style(dark_checked))
-            self._apply_dynamic_colors(dark_checked)
+
             
         sound_cfg = config.get("sound", {})
         play_check = self._cb_play_checklist.isChecked()

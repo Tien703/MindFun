@@ -75,9 +75,9 @@ class GameManagerWindow(QDialog):
         
         # Add Select All / Deselect All buttons
         btn_layout = QHBoxLayout()
-        btn_select_all = QPushButton("Chọn tất cả")
+        btn_select_all = QPushButton(t("btn_select_all"))
         btn_select_all.clicked.connect(self._select_all_presets)
-        btn_deselect_all = QPushButton("Bỏ chọn tất cả")
+        btn_deselect_all = QPushButton(t("btn_deselect_all"))
         btn_deselect_all.clicked.connect(self._deselect_all_presets)
         btn_layout.addWidget(btn_select_all)
         btn_layout.addWidget(btn_deselect_all)
@@ -117,7 +117,7 @@ class GameManagerWindow(QDialog):
         btn_add = QPushButton(t("btn_add"))
         btn_add.clicked.connect(self._add_custom_game)
         
-        btn_scan = QPushButton("🔍 Quét Game")
+        btn_scan = QPushButton(t("btn_scan_games"))
         btn_scan.clicked.connect(self._scan_games)
         
         add_layout.addWidget(self._custom_name_input)
@@ -144,7 +144,7 @@ class GameManagerWindow(QDialog):
         layout.addWidget(group_custom, stretch=1)
 
         # Selected Counter
-        self._lbl_counter = QLabel("Đã chọn: 0 game")
+        self._lbl_counter = QLabel(t("lbl_selected_zero"))
         layout.addWidget(self._lbl_counter)
         self._update_selected_count()
 
@@ -208,7 +208,7 @@ class GameManagerWindow(QDialog):
         # Check if already exists in custom games to prevent duplicates
         for _, _, existing_exe, _ in self._custom_checks:
             if existing_exe.lower() == exe.lower():
-                QMessageBox.warning(self, t("title_game_manager"), "Game này đã có trong danh sách Custom Games!")
+                QMessageBox.warning(self, t("title_game_manager"), t("msg_game_exists"))
                 return
                 
         self._create_custom_game_row(name, exe, True)
@@ -236,7 +236,7 @@ class GameManagerWindow(QDialog):
         count += sum(1 for cb, _, _, _ in self._custom_checks if cb.isChecked())
         total = len(self._preset_checks) + len(self._custom_checks)
         if hasattr(self, '_lbl_counter'):
-            self._lbl_counter.setText(f"Đã chọn: {count} / {total} game")
+            self._lbl_counter.setText(t("lbl_selected_count", count=count, total=total))
 
     def _delete_custom_game(self, row_widget: QWidget, cb: QCheckBox):
         """Delete the selected custom game."""
@@ -287,7 +287,7 @@ class GameManagerWindow(QDialog):
                                 break
                                 
         if not found_games:
-            QMessageBox.information(self, "Auto Scan", "Không tìm thấy game nào trong các thư mục mặc định (Steam, Riot, Epic).")
+            QMessageBox.information(self, t("title_auto_scan"), t("msg_scan_no_games"))
             return
             
         added = 0
@@ -299,7 +299,7 @@ class GameManagerWindow(QDialog):
                 self._add_custom_game()
                 added += 1
                 
-        QMessageBox.information(self, "Auto Scan", f"Đã quét và thêm {added} game mới vào danh sách Custom.")
+        QMessageBox.information(self, t("title_auto_scan"), t("msg_scan_added", added=added))
 
     def _save_game_list(self):
         """Save the combined preset + custom game list to config."""

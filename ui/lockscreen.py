@@ -100,6 +100,8 @@ class LockScreen(QWidget):
         self._is_closing = False
         self._drag_pos = None
         self._global_elapsed_seconds = 0
+        self._furthest_group_index = 0
+        self._was_red = False
 
         # Load tasks grouped by category
         _, self._checklist_groups = self._load_questions_and_tasks(config)
@@ -196,11 +198,18 @@ class LockScreen(QWidget):
 
     def _setup_ui(self):
         """Build the lockscreen UI layout."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 40, 40, 40)
-        layout.setSpacing(20)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        # ── Game name label ──
+        # ── LEFT FRAME (Beige background) ──
+        left_frame = QFrame()
+        left_frame.setStyleSheet("background-color: #c5cec0;")
+        left_pane = QVBoxLayout(left_frame)
+        left_pane.setContentsMargins(40, 40, 40, 40)
+        left_pane.setSpacing(20)
+
+        # Game name label
         from core.config_manager import get_game_name
         friendly_name = get_game_name(self._game_exe)
         
@@ -209,45 +218,75 @@ class LockScreen(QWidget):
                 self._game_label = QLabel(t("soft_sleep_lock_warning", game=friendly_name))
             else:
                 self._game_label = QLabel(t("sleep_lock_warning", game=friendly_name))
-            self._game_label.setStyleSheet("color: #ed8796; font-size: 24px; font-weight: bold;")
+            self._game_label.setStyleSheet("color: #ed8796; font-size: 24px; font-weight: bold; background: transparent; border: none;")
         else:
             self._game_label = QLabel(t("game_paused", game=friendly_name))
+            self._game_label.setStyleSheet("color: #000000; font-size: 20px; font-weight: bold; background: transparent; border: none;")
             
-        self._game_label.setAlignment(Qt.AlignCenter)
+        self._game_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self._game_label.setObjectName("game_label")
-        layout.addWidget(self._game_label)
+        left_pane.addWidget(self._game_label)
         
-        # ── Split Layout ──
-        split_layout = QHBoxLayout()
-        split_layout.setSpacing(40)
+        left_pane.addStretch()
         
-        # LEFT PANE: Progress Character & Countdown Label
-        left_pane = QVBoxLayout()
-        left_pane.setAlignment(Qt.AlignCenter)
-        
-        self._progress = ProgressCharacter()
+        # Countdown label inside Speech Bubble
+        self._bubble_frame = QFrame()
+        self._bubble_frame.setStyleSheet("""
+            QFrame {
+                background-color: #e2d6b5;
+                border: 4px solid #66461a;
+                border-radius: 10px;
+            }
+        """)
+        bubble_layout = QVBoxLayout(self._bubble_frame)
+        bubble_layout.setContentsMargins(15, 15, 15, 15)
         
         self._countdown_label = QLabel()
         self._countdown_label.setAlignment(Qt.AlignCenter)
-        pal = theme.get_settings_palette(load_config().get("dark_mode", True))
-        self._countdown_label.setStyleSheet(f"color: {pal['desc_color']}; font-size: 16px; font-weight: bold;")
-
+        self._countdown_label.setStyleSheet("color: #000000; font-size: 16px; font-weight: bold; border: none; background: transparent;")
+        bubble_layout.addWidget(self._countdown_label)
+        
+        # Progress character
+        self._progress = ProgressCharacter()
         self._progress.setMaxValue(self._total_seconds)
-            
         self._progress.setValue(self._total_seconds - self._global_elapsed_seconds)
-        self._countdown_label.setText(f"{self._remaining}s\n\n{t('waiting_prompt')}")
+        
         
         if self._is_sleep_lock and not self._is_soft_sleep_lock:
             self._progress.hide()
-            self._countdown_label.hide()
+            self._bubble_frame.hide()
             
-        left_pane.addWidget(self._progress)
-        left_pane.addSpacing(20)
-        left_pane.addWidget(self._countdown_label)
-        split_layout.addLayout(left_pane, 1)
+        # Center the bubble and character
+        char_layout = QVBoxLayout()
+        char_layout.setAlignment(Qt.AlignCenter)
+        char_layout.addWidget(self._bubble_frame, 0, Qt.AlignCenter)
+        char_layout.addSpacing(10)
+        char_layout.addWidget(self._progress, 0, Qt.AlignCenter)
         
-        # RIGHT PANE: Stacked Widget (Questions/Checklist)
-        right_pane = QVBoxLayout()
+        left_pane.addLayout(char_layout)
+        left_pane.addStretch()
+        layout.addWidget(left_frame, 4)
+
+        # ── RIGHT FRAME (Dark Green background) ──
+        right_frame = QFrame()
+        right_frame.setStyleSheet("background-color: #436762;")
+        right_pane = QVBoxLayout(right_frame)
+        right_pane.setContentsMargins(40, 40, 40, 40)
+        right_pane.setSpacing(20)
+        
+        # Checklist/Board Frame
+        self._board_frame = QFrame()
+        self._board_frame.setStyleSheet("""
+            QFrame#board_frame {
+                background-color: #fce3b8;
+                border: 8px solid #c98835;
+                border-radius: 5px;
+            }
+        """)
+        self._board_frame.setObjectName("board_frame")
+        board_layout = QVBoxLayout(self._board_frame)
+        board_layout.setContentsMargins(20, 20, 20, 20)
+        
         if self._checklist_groups:
             self._stacked_checklists = QStackedWidget()
             
@@ -258,8 +297,7 @@ class LockScreen(QWidget):
                 page_layout.setContentsMargins(0, 0, 0, 0)
                 
                 title = QLabel(f"[{group_data['name']}]")
-                pal = theme.get_settings_palette(load_config().get("dark_mode", True))
-                title.setStyleSheet(f"color: {pal['text_color']}; font-size: 20px; font-weight: bold; margin-bottom: 8px;")
+                title.setStyleSheet("color: #000000; font-size: 20px; font-weight: bold; margin-bottom: 8px; background: transparent; border: none;")
                 page_layout.addWidget(title)
                 
                 if group_data["type"] == "checklist":
@@ -277,17 +315,13 @@ class LockScreen(QWidget):
                         lbl.setWordWrap(True)
                         lbl.setCursor(Qt.PointingHandCursor)
                         
-                        is_dark = load_config().get("dark_mode", True)
-                        text_col = theme.get_settings_palette(is_dark)["text_color"]
-                        desc_col = theme.get_settings_palette(is_dark)["desc_color"]
-                        
                         if is_done:
                             f = lbl.font()
                             f.setStrikeOut(True)
                             lbl.setFont(f)
-                            lbl.setStyleSheet(f"color: {desc_col}; font-size: 22px;")
+                            lbl.setStyleSheet("color: #888888; font-size: 22px; background: transparent; border: none;")
                         else:
-                            lbl.setStyleSheet(f"color: {text_col}; font-size: 22px;")
+                            lbl.setStyleSheet("color: #000000; font-size: 22px; background: transparent; border: none;")
                             
                         lbl.mousePressEvent = lambda event, cb_ref=cb, g_id=group_id, i_id=item_id, lbl_ref=lbl: cb_ref.setChecked(not cb_ref.isChecked()) or self._on_task_checked(g_id, i_id, cb_ref, lbl_ref)
                         cb.clicked.connect(lambda checked, g_id=group_id, i_id=item_id, cb_ref=cb, lbl_ref=lbl: self._on_task_checked(g_id, i_id, cb_ref, lbl_ref))
@@ -300,7 +334,7 @@ class LockScreen(QWidget):
                     lbl = QLabel(f'"{group_data["question"]}"')
                     lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                     lbl.setWordWrap(True)
-                    lbl.setObjectName("question_label")
+                    lbl.setStyleSheet("color: #000000; font-size: 20px; background: transparent; border: none;")
                     page_layout.addWidget(lbl)
                     
                 page_layout.addStretch()
@@ -310,56 +344,96 @@ class LockScreen(QWidget):
             scroll_area.setWidgetResizable(True)
             scroll_area.setFrameShape(QFrame.NoFrame)
             scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            scroll_area.setStyleSheet("background: transparent; border: none;")
             scroll_area.setWidget(self._stacked_checklists)
             
             if self._is_sleep_lock and not self._is_soft_sleep_lock:
                 scroll_area.hide()
             
-            right_pane.addWidget(scroll_area)
+            board_layout.addWidget(scroll_area)
         else:
             lbl = QLabel(t("waiting_prompt"))
             lbl.setAlignment(Qt.AlignCenter)
-            lbl.setObjectName("question_label")
+            lbl.setStyleSheet("color: #000000; font-size: 20px; background: transparent; border: none;")
             if self._is_sleep_lock and not self._is_soft_sleep_lock:
                 lbl.hide()
-            right_pane.addWidget(lbl)
+            board_layout.addWidget(lbl)
             
-        split_layout.addLayout(right_pane, 1)
-        layout.addLayout(split_layout, 1)
+        # Board Buttons (Prev/Next)
+        board_btn_layout = QHBoxLayout()
+        board_btn_layout.setSpacing(20)
         
-        # ── Action buttons ──
-        self._warning_label = QLabel(t("unfinished_tasks_ask"))
-        self._warning_label.setAlignment(Qt.AlignCenter)
-        self._warning_label.setStyleSheet("color: #ed8796; font-size: 16px; font-weight: bold; font-style: italic;")
-        self._warning_label.hide()
-        layout.addWidget(self._warning_label)
-
-        btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(30)
-
+        self._btn_prev = QPushButton(t("btn_prev"))
+        self._btn_prev.setObjectName("btn_prev")
+        self._btn_prev.setEnabled(False)
+        self._btn_prev.setCursor(Qt.PointingHandCursor)
+        self._btn_prev.hide()
+        self._btn_prev.clicked.connect(self._handle_prev)
+        # TODO: Implement _handle_prev if you want to go back
+        
+        self._btn_next = QPushButton(t("btn_next") if t("btn_next") != "btn_next" else "Sau")
+        self._btn_next.setObjectName("btn_next") 
+        self._btn_next.setEnabled(not self._countdown_active)
+        self._btn_next.setCursor(Qt.PointingHandCursor)
+        self._btn_next.clicked.connect(self._handle_next)
+        
+        self._wooden_btn_style = """
+            QPushButton {
+                background-color: #e2d6b5;
+                border: 2px solid #fce3b8;
+                border-bottom: 4px solid #c98835;
+                border-right: 4px solid #c98835;
+                color: #000000;
+                padding: 10px;
+                font-weight: bold;
+                border-radius: 0px;
+            }
+            QPushButton:pressed {
+                border: 2px solid #c98835;
+                border-bottom: 2px solid #fce3b8;
+                border-right: 2px solid #fce3b8;
+            }
+            QPushButton:disabled {
+                background-color: #d9d9d9;
+                color: #888888;
+                border: 2px solid #eeeeee;
+                border-bottom: 4px solid #aaaaaa;
+                border-right: 4px solid #aaaaaa;
+            }
+        """
+        self._btn_prev.setStyleSheet(self._wooden_btn_style)
+        self._btn_next.setStyleSheet(self._wooden_btn_style)
+        
+        board_btn_layout.addStretch()
+        board_btn_layout.addWidget(self._btn_prev)
+        board_btn_layout.addWidget(self._btn_next)
+        board_btn_layout.addStretch()
+        
+        board_layout.addLayout(board_btn_layout)
+        right_pane.addWidget(self._board_frame)
+        
+        
+        
+        # Main Action Buttons (Play/Quit)
+        main_btn_layout = QHBoxLayout()
+        main_btn_layout.setSpacing(30)
+        
         self._btn_quit = QPushButton(t("btn_quit"))
         self._btn_quit.setObjectName("btn_quit")
         self._btn_quit.setEnabled(True)
         self._btn_quit.setCursor(Qt.PointingHandCursor)
         self._btn_quit.clicked.connect(self._handle_quit)
-        self._btn_quit.setMinimumHeight(60)
-        self._btn_quit.setMinimumWidth(200)
-
-        self._btn_next = QPushButton(t("btn_next"))
-        self._btn_next.setObjectName("btn_play") 
-        self._btn_next.setEnabled(not self._countdown_active)
-        self._btn_next.setCursor(Qt.PointingHandCursor)
-        self._btn_next.clicked.connect(self._handle_next)
-        self._btn_next.setMinimumHeight(60)
-        self._btn_next.setMinimumWidth(200)
-
+        self._btn_quit.setMinimumHeight(50)
+        
         self._btn_play = QPushButton(t("btn_play"))
         self._btn_play.setObjectName("btn_play")
         self._btn_play.setEnabled(not self._countdown_active)
         self._btn_play.setCursor(Qt.PointingHandCursor)
         self._btn_play.clicked.connect(self._handle_play)
-        self._btn_play.setMinimumHeight(60)
-        self._btn_play.setMinimumWidth(200)
+        self._btn_play.setMinimumHeight(50)
+        
+        self._btn_quit.setStyleSheet(self._wooden_btn_style)
+        self._btn_play.setStyleSheet(self._wooden_btn_style)
 
         n = len(self._checklist_groups)
         if n > 1 and self._current_group_index < n - 1:
@@ -371,19 +445,20 @@ class LockScreen(QWidget):
             if not self._is_soft_sleep_lock:
                 self._btn_play.hide()
                 self._btn_next.hide()
-                self._warning_label.hide()
+                
 
-        btn_layout.addStretch()
-        btn_layout.addWidget(self._btn_quit)
-        btn_layout.addWidget(self._btn_next)
-        btn_layout.addWidget(self._btn_play)
-        btn_layout.addStretch()
-
-        layout.addLayout(btn_layout)
+        main_btn_layout.addStretch()
+        main_btn_layout.addWidget(self._btn_quit)
+        main_btn_layout.addWidget(self._btn_play)
+        main_btn_layout.addStretch()
+        
+        right_pane.addLayout(main_btn_layout)
+        
+        layout.addWidget(right_frame, 6)
         
         self.size_grip = QSizeGrip(self)
+        self._update_character_state()
         self._apply_styles()
-
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -464,6 +539,7 @@ class LockScreen(QWidget):
                         break
                         
         self._update_play_button()
+        self._update_character_state()
 
     def _has_unfinished_tasks(self) -> bool:
         """Check if any checklist items are not done."""
@@ -502,10 +578,7 @@ class LockScreen(QWidget):
         on_last_screen = (self._current_group_index == n - 1) if n > 0 else True
         can_play_time = on_last_screen and not self._countdown_active
         
-        if has_unfinished and can_play_time and not is_blocked:
-            self._warning_label.show()
-        else:
-            self._warning_label.hide()
+        
             
         if is_blocked:
             self._btn_play.setEnabled(False)
@@ -523,7 +596,7 @@ class LockScreen(QWidget):
             """)
         else:
             self._btn_play.setText(t("btn_play"))
-            self._btn_play.setStyleSheet("") # Revert to global stylesheet
+            self._btn_play.setStyleSheet(self._wooden_btn_style) # Revert to wooden style
             
             if can_play_time:
                 self._btn_play.setEnabled(True)
@@ -573,16 +646,60 @@ class LockScreen(QWidget):
         except Exception as e:
             logger.error("Error checking process alive: %s", e)
 
+    def _update_character_state(self):
+        total_left = max(0, self._total_seconds - self._global_elapsed_seconds)
+        
+        is_red = False
+        bubble_message = t("waiting_prompt")
+        
+        on_last_screen = (self._current_group_index == len(self._checklist_groups) - 1) if self._checklist_groups else True
+        
+        if self._is_sleep_lock:
+            is_red = True
+            if self._is_soft_sleep_lock:
+                bubble_message = t("soft_sleep_lock_warning")
+            else:
+                bubble_message = t("sleep_lock_warning")
+        else:
+            if on_last_screen and self._has_unfinished_tasks():
+                is_red = True
+                if self._check_strict_block():
+                    bubble_message = t("strict_task_block")
+                else:
+                    bubble_message = t("soft_task_block")
+            else:
+                bubble_message = t("waiting_prompt")
+                
+        # Update character color
+        self._progress.set_red_mode(is_red)
+        
+        # Play sound on color change to red
+        if is_red and not self._was_red:
+            try:
+                import winsound
+                winsound.PlaySound("SystemExclamation", winsound.SND_ALIAS | winsound.SND_ASYNC)
+            except:
+                pass
+        self._was_red = is_red
+        
+        # Update bubble text
+        if total_left > 0:
+            time_text = t("time_meditation", total_left=total_left)
+        else:
+            time_text = ""
+            
+        self._countdown_label.setText(f"{time_text}{bubble_message}")
+
     def _tick(self):
         """Update countdown and check state."""
-        # Topmost enforcement
         self.raise_()
         self.activateWindow()
 
-        # Countdown logic
         if self._countdown_active:
             self._remaining -= 1
             self._global_elapsed_seconds += 1
+            
+            total_left = max(0, self._total_seconds - self._global_elapsed_seconds)
 
             if self._remaining <= 0:
                 self._remaining = 0
@@ -592,13 +709,23 @@ class LockScreen(QWidget):
                 n = len(self._checklist_groups)
                 if n > 1 and self._current_group_index < n - 1:
                     self._btn_next.setEnabled(True)
+                    self._btn_next.setText(t("btn_next"))
                 else:
                     self._update_play_button()
                     
-                self._countdown_label.setText(f"0s\n\n{t('waiting_prompt')}")
-                logger.info("Countdown finished for current group — buttons enabled")
+                self._update_character_state()
+                import logging
+                logging.getLogger(__name__).info("Countdown finished for current group — buttons enabled")
             else:
-                self._countdown_label.setText(f"{self._remaining}s\n\n{t('waiting_prompt')}")
+                self._update_character_state()
+                
+                # Update button text with remaining group time
+                n = len(self._checklist_groups)
+                if n > 1 and self._current_group_index < n - 1:
+                    btn_text = t("btn_next")
+                    self._btn_next.setText(f"{btn_text} ({self._remaining}s)")
+                else:
+                    self._btn_play.setText(f"{t('btn_play')} ({self._remaining}s)")
             
             self._progress.setValue(self._total_seconds - self._global_elapsed_seconds)
 
@@ -666,20 +793,43 @@ class LockScreen(QWidget):
             # Minimize game window continuously to prevent fullscreen bypass
             self._minimize_game_windows()
 
+    def _handle_prev(self):
+        """Go to the previous group."""
+        if self._current_group_index > 0:
+            self._current_group_index -= 1
+            if self._checklist_groups:
+                self._stacked_checklists.setCurrentIndex(self._current_group_index)
+            
+            if self._current_group_index == 0:
+                self._btn_prev.hide()
+                
+            self._btn_next.show()
+            self._btn_next.setEnabled(True)
+            self._btn_next.setText(t("btn_next"))
+            
+            self._btn_play.hide()
+            self._update_play_button()
+
     def _handle_next(self):
         """Go to the next group."""
         self._current_group_index += 1
+        is_first_time = (self._current_group_index > self._furthest_group_index)
+        self._furthest_group_index = max(self._furthest_group_index, self._current_group_index)
         n = len(self._checklist_groups)
         
         # Update UI
         if self._checklist_groups:
             self._stacked_checklists.setCurrentIndex(self._current_group_index)
             
-        self._remaining = self._group_times[self._current_group_index]
+        self._btn_prev.show()
+        self._btn_prev.setEnabled(True)
+        
+        if is_first_time:
+            self._remaining = self._group_times[self._current_group_index]
+            self._countdown_active = (self._remaining > 0)
+            
         self._progress.setValue(self._total_seconds - self._global_elapsed_seconds)
         
-        # Determine if we should start countdown
-        self._countdown_active = (self._remaining > 0)
         self._btn_quit.setEnabled(True)
         self._btn_next.setEnabled(not self._countdown_active)
         self._btn_play.setEnabled(not self._countdown_active)
@@ -688,9 +838,13 @@ class LockScreen(QWidget):
             self._btn_next.hide()
             self._btn_play.show()
             self._update_play_button()
+        else:
+            self._btn_next.setText(t("btn_next"))
             
-        self._countdown_label.setText(f"{self._remaining}s\n\n{t('waiting_prompt')}")
-        
+        # Update bubble text
+        total_left = max(0, self._total_seconds - self._global_elapsed_seconds)
+        self._update_character_state()
+
     def _handle_play(self):
         """User chose 'I still want to play' — resume game and close."""
         logger.info("User chose PLAY for %s", self._game_exe)

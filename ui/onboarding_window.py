@@ -33,7 +33,7 @@ class LanguageSlide(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(20)
         
-        btn_vi = QPushButton("Tiếng Việt")
+        btn_vi = QPushButton(t("lang_vietnamese"))
         btn_vi.setFixedSize(200, 45)
         btn_vi.setStyleSheet("""
             QPushButton { background: #f2b42c; color: #111; font-size: 14px; font-weight: bold; border-radius: 8px; }

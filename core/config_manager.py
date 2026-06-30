@@ -22,7 +22,10 @@ _BUNDLE_DIR = Path(__file__).resolve().parent.parent / "data"
 
 def get_data_dir() -> Path:
     """Get the user data directory (%APPDATA%/Mindfun/), creating it if needed."""
-    _APPDATA_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        _APPDATA_DIR.mkdir(parents=True, exist_ok=True)
+    except FileExistsError:
+        pass
     return _APPDATA_DIR
 
 

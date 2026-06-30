@@ -26,7 +26,7 @@ class ProgressCharacter(QWidget):
             self.fill_pixmap.fill(QColor("#a6e3a1")) # Green fallback
 
         # Scale to a fixed size using FastTransformation to preserve pixel art sharpness
-        self.fixed_w, self.fixed_h = 150, 150
+        self.fixed_w, self.fixed_h = 250, 250
         self.base_pixmap = self.base_pixmap.scaled(self.fixed_w, self.fixed_h, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.fill_pixmap = self.fill_pixmap.scaled(self.fixed_w, self.fixed_h, Qt.KeepAspectRatio, Qt.FastTransformation)
 
@@ -42,6 +42,20 @@ class ProgressCharacter(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_animation)
         self.timer.start(16) # ~60 fps
+        
+        self._is_red = False
+        
+    def set_red_mode(self, is_red: bool):
+        if self._is_red == is_red:
+            return
+        self._is_red = is_red
+        fill_path = "assets/char_red.png" if is_red else "assets/char_green.png"
+        self.fill_pixmap = QPixmap(fill_path)
+        if self.fill_pixmap.isNull():
+            self.fill_pixmap = QPixmap(150, 150)
+            self.fill_pixmap.fill(QColor("#e06c75") if is_red else QColor("#a6e3a1"))
+        self.fill_pixmap = self.fill_pixmap.scaled(self.fixed_w, self.fixed_h, Qt.KeepAspectRatio, Qt.FastTransformation)
+        self.update()
         
     def set_progress(self, progress: float):
         """Set target progress from 0.0 to 1.0"""

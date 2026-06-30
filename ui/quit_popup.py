@@ -12,6 +12,7 @@ from typing import Callable
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication
 from PyQt5.QtCore import Qt, QTimer
 import ui.theme as theme
+from core.i18n import t
 
 # For SetWindowPos HWND_TOPMOST
 try:
@@ -89,7 +90,7 @@ class QuitPopup(QWidget):
         text = f"Close {friendly_name} to exit."
         lang = load_config().get("language", "vi")
         if lang == "vi":
-            text = f"Vui lòng tắt {friendly_name} để hoàn tất."
+            text = t("msg_please_close_game", friendly_name=friendly_name)
             
         label = QLabel(text)
         label.setAlignment(Qt.AlignCenter)
