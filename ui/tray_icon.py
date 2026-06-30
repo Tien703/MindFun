@@ -34,6 +34,7 @@ class TrayIcon(QSystemTrayIcon):
         on_resume: Optional[Callable] = None,
         on_quit: Optional[Callable] = None,
         on_reset_whitelist: Optional[Callable] = None,
+        on_toggle_chat_head: Optional[Callable] = None,
         parent=None,
     ):
         icon = QIcon(icon_path) if icon_path else QIcon()
@@ -45,6 +46,7 @@ class TrayIcon(QSystemTrayIcon):
         self._on_resume = on_resume
         self._on_quit = on_quit
         self._on_reset_whitelist = on_reset_whitelist
+        self._on_toggle_chat_head = on_toggle_chat_head
         self._is_paused = False
 
         self.setToolTip(t("tray_tooltip"))
@@ -96,6 +98,13 @@ class TrayIcon(QSystemTrayIcon):
 
         menu.addSeparator()
 
+        if self._on_toggle_chat_head:
+            toggle_action = QAction(t("tray_toggle_bubble"), menu)
+            toggle_action.triggered.connect(self._on_toggle_chat_head)
+            menu.addAction(toggle_action)
+
+        menu.addSeparator()
+
 
         is_anti_cheat = config.get("anti_cheat", True)
 
@@ -107,8 +116,6 @@ class TrayIcon(QSystemTrayIcon):
         else:
             pause_action = QAction(t("tray_pause_today"), menu)
             pause_action.triggered.connect(self._pause_today)
-            if is_anti_cheat:
-                pause_action.setEnabled(False)
             menu.addAction(pause_action)
 
         menu.addSeparator()
@@ -120,8 +127,6 @@ class TrayIcon(QSystemTrayIcon):
 
         quit_action = QAction(t("tray_quit"), menu)
         quit_action.triggered.connect(self._quit)
-        if is_anti_cheat:
-            quit_action.setEnabled(False)
         menu.addAction(quit_action)
 
         self.setContextMenu(menu)
@@ -171,14 +176,10 @@ class TrayIcon(QSystemTrayIcon):
             QMessageBox.No,
         )
         if reply == QMessageBox.Yes:
-            self._is_paused = True
-            self.refresh_menu()
             if self._on_pause_today:
                 self._on_pause_today()
 
     def _resume(self):
-        self._is_paused = False
-        self.refresh_menu()
         if self._on_resume:
             self._on_resume()
 
@@ -196,4 +197,3 @@ class TrayIcon(QSystemTrayIcon):
         """Quit the application (tray companion only, not the watchdog)."""
         if self._on_quit:
             self._on_quit()
-        QCoreApplication.quit()

@@ -32,15 +32,23 @@ class GameDetector:
     with (game_exe, game_pid, launcher_exe, launcher_pid).
     """
 
-    def __init__(self, on_game_detected: Callable[[str, int, Optional[str], Optional[int]], None]):
+    def __init__(self, on_game_detected: Callable[[str, int, Optional[str], Optional[int]], None],
+                 on_play_time_tick: Optional[Callable[[int], None]] = None):
         """
         Args:
             on_game_detected: Callback function called when a new game is detected.
                 Signature: (game_exe: str, game_pid: int, launcher_exe: str|None, launcher_pid: int|None)
+            on_play_time_tick: Callback function called every 15 minutes of continuous gameplay.
+                Signature: (total_minutes: int)
         """
         self._on_game_detected = on_game_detected
+        self._on_play_time_tick = on_play_time_tick
         self._whitelisted_session: set[str] = set()
         self._active_pids: set[int] = set()  # PIDs currently being handled (prevent re-trigger)
+        
+        self._consecutive_seconds = 0
+        self._session_minutes = 0
+        self._inactive_seconds = 0
         self._lock = threading.Lock()
         self._running = False
         self._thread: Optional[threading.Thread] = None
@@ -74,6 +82,10 @@ class GameDetector:
         """Resume detection after pause."""
         self._paused = False
         logger.info("GameDetector resumed")
+
+    def is_paused(self) -> bool:
+        """Return whether detection is currently paused."""
+        return self._paused
 
 
 
@@ -170,6 +182,22 @@ class GameDetector:
         if is_playing_whitelisted:
             from core.report_logger import add_play_time
             add_play_time(3)  # Loop runs every 3 seconds
+            
+            self._inactive_seconds = 0
+            self._consecutive_seconds += 3
+            if self._consecutive_seconds >= 60:
+                self._consecutive_seconds = 0
+                self._session_minutes += 1
+                
+                # Trigger bubble every 15 minutes
+                if self._session_minutes % 15 == 0 and self._on_play_time_tick:
+                    self._on_play_time_tick(self._session_minutes)
+        else:
+            self._inactive_seconds += 3
+            # If inactive for > 2 minutes, reset session
+            if self._inactive_seconds > 120:
+                self._consecutive_seconds = 0
+                self._session_minutes = 0
 
     def _find_process(self, name: str) -> list[psutil.Process]:
         """Find processes by name (case-insensitive)."""

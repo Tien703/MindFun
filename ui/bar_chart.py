@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QToolTip
 from PyQt5.QtGui import QPainter, QColor, QFont, QPen, QBrush
 from PyQt5.QtCore import Qt, QRect
 from datetime import datetime, timedelta
+from core.i18n import t
 
 import ui.theme as theme
 from core.config_manager import load_config
@@ -110,14 +111,14 @@ class PlayTimeBarChart(QWidget):
                 rect = QRect(x, int(y_bottom - valid_h), int(bar_width), int(valid_h))
                 painter.setBrush(QBrush(QColor(colors["valid"]))) # Green for valid
                 painter.setPen(Qt.NoPen)
-                painter.drawRect(rect)
+                painter.drawRoundedRect(rect, 4, 4)
                 
             # Draw violation part (Red)
             if viol_h > 0:
                 rect = QRect(x, int(y_bottom - total_h), int(bar_width), int(viol_h))
                 painter.setBrush(QBrush(QColor(colors["violation"]))) # Red for violation
                 painter.setPen(Qt.NoPen)
-                painter.drawRect(rect)
+                painter.drawRoundedRect(rect, 4, 4)
                 
             # Save rect for tooltip (full bar)
             if total_sec > 0:
@@ -136,7 +137,10 @@ class PlayTimeBarChart(QWidget):
         for rect, total_h, viol_h, date_str in self._bars_rects:
             if rect.contains(pos):
                 valid_h = total_h - viol_h
-                text = f"{date_str}\nTổng: {total_h:.1f}h\nHợp lệ: {valid_h:.1f}h\nQuá giờ: {viol_h:.1f}h"
+                text = (f"{date_str}\n"
+                        f"{t('chart_total', total_h=total_h)}\n"
+                        f"{t('chart_valid', valid_h=valid_h)}\n"
+                        f"{t('chart_viol', viol_h=viol_h)}")
                 QToolTip.showText(self.mapToGlobal(pos), text, self)
                 return
         QToolTip.hideText()

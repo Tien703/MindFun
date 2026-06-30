@@ -77,6 +77,24 @@ def load_config() -> dict:
     config.setdefault("anti_cheat", True)
     config.setdefault("dev_mode", False)
     config.setdefault("dark_mode", True)
+    config.setdefault("onboarding_completed", False)
+    
+    config.setdefault("theme", {
+        "primary_accent": "#f2b42c",
+        "bg_dark": "#202020",
+        "card_dark": "#2D2D2D",
+        "bg_light": "#F3F3F3",
+        "card_light": "#FFFFFF",
+        "success_accent": "#b6f36d",
+        "danger_accent": "#fe413c"
+    })
+    
+    config.setdefault("sound", {
+        "checklist_sound": "assets/sounds/checklist_sounds/check_1.wav",
+        "notification_sound": "assets/sounds/notification_sounds/notif_1.wav",
+        "play_checklist": True,
+        "play_notification": True
+    })
     
     # Check if we need to run daily reset on startup
     from datetime import datetime

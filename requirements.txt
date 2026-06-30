@@ -4,3 +4,4 @@ psutil>=5.9.0
 Pillow>=10.0.0
 winotify>=1.1.0
 pyinstaller>=6.0.0
+BlurWindow>=1.2.1

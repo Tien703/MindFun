@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QListWidget, QComboBox, QMessageBox,
     QInputDialog, QFrame,
     QGroupBox, QScrollArea, QTimeEdit, QSpinBox, QShortcut,
-    QGraphicsDropShadowEffect,
+    QGraphicsDropShadowEffect, QColorDialog, QFileDialog,
 )
 from PyQt5.QtCore import Qt, QTime, QTimer
 from PyQt5.QtGui import QKeySequence, QColor
@@ -144,35 +144,21 @@ class SettingsWindow(QWidget):
             5: (t("mode_5_name"), t("mode_5_desc")),
         }
 
-        for mode_num, (name, desc) in self._modes_data.items():
-            radio = QRadioButton(f"{name}")
-            radio.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 8px;")
-            if mode_num == current_mode:
-                radio.setChecked(True)
-                self._mode_desc_label.setText(desc)
-            self._mode_group.addButton(radio, mode_num)
-            radio_layout.addWidget(radio)
-
-        self._mode_group.idClicked.connect(self._on_mode_changed)
-
-        mode_layout.addLayout(radio_layout, 1)
-        mode_layout.addLayout(desc_layout, 1)
-        
-        mode_main_layout.addLayout(mode_layout)
-        
         # Custom Mode settings
         self._custom_mode_widget = QWidget()
         custom_layout = QVBoxLayout(self._custom_mode_widget)
-        custom_layout.setContentsMargins(0, 8, 0, 0)
-        custom_layout.setSpacing(12)
+        custom_layout.setContentsMargins(12, 12, 12, 12)
+        custom_layout.setSpacing(16)
         
         # Duration
         dur_layout = QHBoxLayout()
+        dur_layout.setSpacing(20)
         lbl_dur = QLabel(t("label_custom_duration"))
         dur_layout.addWidget(lbl_dur)
         self._custom_duration = QSpinBox()
         self._custom_duration.setRange(1, 3600)
-        self._custom_duration.setFixedHeight(32)
+        self._custom_duration.setFixedHeight(36)
+        self._custom_duration.setMinimumWidth(100)
         self._custom_duration.wheelEvent = lambda event: event.ignore()
         dur_layout.addWidget(self._custom_duration)
         dur_layout.addStretch()
@@ -180,11 +166,13 @@ class SettingsWindow(QWidget):
         
         # Sleep lock behavior
         sl_layout = QHBoxLayout()
+        sl_layout.setSpacing(20)
         lbl_sl = QLabel(t("label_custom_sleep"))
         sl_layout.addWidget(lbl_sl)
         self._custom_sleep = QComboBox()
         self._custom_sleep.addItems([t("opt_remind"), t("opt_lock")])
-        self._custom_sleep.setFixedHeight(32)
+        self._custom_sleep.setFixedHeight(36)
+        self._custom_sleep.setMinimumWidth(150)
         self._custom_sleep.wheelEvent = lambda event: event.ignore()
         sl_layout.addWidget(self._custom_sleep)
         sl_layout.addStretch()
@@ -192,11 +180,13 @@ class SettingsWindow(QWidget):
         
         # Task lock behavior
         tl_layout = QHBoxLayout()
+        tl_layout.setSpacing(20)
         lbl_tl = QLabel(t("label_custom_task"))
         tl_layout.addWidget(lbl_tl)
         self._custom_task = QComboBox()
         self._custom_task.addItems([t("opt_remind"), t("opt_lock")])
-        self._custom_task.setFixedHeight(32)
+        self._custom_task.setFixedHeight(36)
+        self._custom_task.setMinimumWidth(150)
         self._custom_task.wheelEvent = lambda event: event.ignore()
         tl_layout.addWidget(self._custom_task)
         tl_layout.addStretch()
@@ -209,8 +199,45 @@ class SettingsWindow(QWidget):
         self._custom_task.setCurrentIndex(1 if custom_config.get("task_lock") == "lock" else 0)
         
         self._custom_mode_widget.setVisible(current_mode == 5)
-        mode_main_layout.addWidget(self._custom_mode_widget)
-            
+
+        for mode_num, (name, desc) in self._modes_data.items():
+            radio = QRadioButton(f"{name}")
+            radio.setStyleSheet("""
+                QRadioButton {
+                    font-size: 16px; 
+                    font-weight: bold; 
+                    padding: 12px; 
+                    border: 1px solid #555; 
+                    border-radius: 8px;
+                    margin-bottom: 8px;
+                }
+                QRadioButton:checked {
+                    border: 2px solid #f2b42c;
+                    background-color: rgba(242, 180, 44, 0.1);
+                }
+                QRadioButton:hover {
+                    background-color: rgba(120, 120, 120, 0.1);
+                }
+                QRadioButton::indicator {
+                    width: 18px;
+                    height: 18px;
+                }
+            """)
+            if mode_num == current_mode:
+                radio.setChecked(True)
+                self._mode_desc_label.setText(desc)
+            self._mode_group.addButton(radio, mode_num)
+            radio_layout.addWidget(radio)
+
+        self._mode_group.idClicked.connect(self._on_mode_changed)
+        
+        desc_layout.addWidget(self._custom_mode_widget)
+        desc_layout.addStretch()
+
+        mode_layout.addLayout(radio_layout, 1)
+        mode_layout.addLayout(desc_layout, 1)
+        
+        mode_main_layout.addLayout(mode_layout)
         layout.addWidget(group_mode)
 
         # Sleep Lock
@@ -273,10 +300,92 @@ class SettingsWindow(QWidget):
         lang_layout.addWidget(self._lang_combo)
         layout.addWidget(group_lang)
 
+        # Theme Customization
+        group_theme = QGroupBox(t("label_theme"))
+        theme_layout = QVBoxLayout(group_theme)
+        
         # Dark Mode Toggle
         self._dark_mode_cb = QCheckBox("Dark Mode")
         self._dark_mode_cb.setChecked(config.get("dark_mode", True))
-        layout.addWidget(self._dark_mode_cb)
+        theme_layout.addWidget(self._dark_mode_cb)
+        
+        # Primary Color Picker
+        color_layout = QHBoxLayout()
+        color_layout.addWidget(QLabel(t("label_primary_color")))
+        
+        self._color_preview = QWidget()
+        self._color_preview.setFixedSize(24, 24)
+        theme_cfg = config.get("theme", {})
+        self._current_primary_color = theme_cfg.get("primary_accent", "#f2b42c")
+        self._color_preview.setStyleSheet(f"background-color: {self._current_primary_color}; border: 1px solid #777; border-radius: 4px;")
+        color_layout.addWidget(self._color_preview)
+        
+        btn_pick_color = QPushButton(t("btn_pick_color"))
+        btn_pick_color.clicked.connect(self._pick_primary_color)
+        color_layout.addWidget(btn_pick_color)
+        color_layout.addStretch()
+        
+        theme_layout.addLayout(color_layout)
+        layout.addWidget(group_theme)
+        
+        # Sound Customization
+        group_sound = QGroupBox(t("label_sound"))
+        sound_layout = QVBoxLayout(group_sound)
+        sound_cfg = config.get("sound", {})
+        
+        self._cb_play_checklist = QCheckBox(t("label_checklist_sound"))
+        self._cb_play_checklist.setChecked(sound_cfg.get("play_checklist", True))
+        sound_layout.addWidget(self._cb_play_checklist)
+        
+        cl_sound_layout = QHBoxLayout()
+        self._combo_checklist_sound = QComboBox()
+        self._combo_checklist_sound.addItems([f"Checklist Sound {i}" for i in range(1, 6)] + [t("opt_custom_sound")])
+        
+        # Set current index
+        self._custom_checklist_path = sound_cfg.get("checklist_sound", "assets/sounds/checklist_sounds/check_1.wav")
+        import re
+        m = re.search(r"check_(\d)\.wav$", self._custom_checklist_path)
+        if m:
+            self._combo_checklist_sound.setCurrentIndex(int(m.group(1)) - 1)
+        else:
+            self._combo_checklist_sound.setCurrentIndex(5)
+            
+        self._combo_checklist_sound.currentIndexChanged.connect(self._on_checklist_sound_changed)
+        cl_sound_layout.addWidget(self._combo_checklist_sound)
+        
+        self._btn_browse_checklist = QPushButton(t("btn_browse"))
+        self._btn_browse_checklist.clicked.connect(self._browse_checklist_sound)
+        self._btn_browse_checklist.setVisible(self._combo_checklist_sound.currentIndex() == 5)
+        cl_sound_layout.addWidget(self._btn_browse_checklist)
+        cl_sound_layout.addStretch()
+        sound_layout.addLayout(cl_sound_layout)
+        
+        self._cb_play_notif = QCheckBox(t("label_notif_sound"))
+        self._cb_play_notif.setChecked(sound_cfg.get("play_notification", True))
+        sound_layout.addWidget(self._cb_play_notif)
+        
+        notif_sound_layout = QHBoxLayout()
+        self._combo_notif_sound = QComboBox()
+        self._combo_notif_sound.addItems([f"Notification Sound {i}" for i in range(1, 6)] + [t("opt_custom_sound")])
+        
+        self._custom_notif_path = sound_cfg.get("notification_sound", "assets/sounds/notification_sounds/notif_1.wav")
+        m2 = re.search(r"notif_(\d)\.wav$", self._custom_notif_path)
+        if m2:
+            self._combo_notif_sound.setCurrentIndex(int(m2.group(1)) - 1)
+        else:
+            self._combo_notif_sound.setCurrentIndex(5)
+            
+        self._combo_notif_sound.currentIndexChanged.connect(self._on_notif_sound_changed)
+        notif_sound_layout.addWidget(self._combo_notif_sound)
+        
+        self._btn_browse_notif = QPushButton(t("btn_browse"))
+        self._btn_browse_notif.clicked.connect(self._browse_notif_sound)
+        self._btn_browse_notif.setVisible(self._combo_notif_sound.currentIndex() == 5)
+        notif_sound_layout.addWidget(self._btn_browse_notif)
+        notif_sound_layout.addStretch()
+        sound_layout.addLayout(notif_sound_layout)
+        
+        layout.addWidget(group_sound)
 
         # Game Manager Button
         btn_game_manager = QPushButton(t("btn_manage_games"))
@@ -354,6 +463,37 @@ class SettingsWindow(QWidget):
                 self._anti_cheat_cb.setChecked(True)
                 self._anti_cheat_cb.blockSignals(False)
 
+    def _pick_primary_color(self):
+        color = QColorDialog.getColor(QColor(self._current_primary_color), self, t("btn_pick_color"))
+        if color.isValid():
+            self._current_primary_color = color.name()
+            self._color_preview.setStyleSheet(f"background-color: {self._current_primary_color}; border: 1px solid #777; border-radius: 4px;")
+
+    def _on_checklist_sound_changed(self, index):
+        if index < 5:
+            self._custom_checklist_path = f"assets/sounds/checklist_sounds/check_{index + 1}.wav"
+            self._btn_browse_checklist.setVisible(False)
+        else:
+            self._btn_browse_checklist.setVisible(True)
+
+    def _browse_checklist_sound(self):
+        path, _ = QFileDialog.getOpenFileName(self, t("opt_custom_sound"), "", "Audio Files (*.wav *.mp3)")
+        if path:
+            self._custom_checklist_path = path
+
+    def _on_notif_sound_changed(self, index):
+        if index < 5:
+            self._custom_notif_path = f"assets/sounds/notification_sounds/notif_{index + 1}.wav"
+            self._btn_browse_notif.setVisible(False)
+        else:
+            self._btn_browse_notif.setVisible(True)
+
+    def _browse_notif_sound(self):
+        path, _ = QFileDialog.getOpenFileName(self, t("opt_custom_sound"), "", "Audio Files (*.wav *.mp3)")
+        if path:
+            self._custom_notif_path = path
+
+
     def _save_general_settings(self):
         """Save general settings to config."""
         config = load_config()
@@ -371,6 +511,28 @@ class SettingsWindow(QWidget):
             logger.info("Dark mode changed to %s", dark_checked)
             self.setStyleSheet(theme.get_settings_style(dark_checked))
             self._apply_dynamic_colors(dark_checked)
+            changed = True
+            
+        theme_cfg = config.get("theme", {})
+        if theme_cfg.get("primary_accent") != self._current_primary_color:
+            theme_cfg["primary_accent"] = self._current_primary_color
+            config["theme"] = theme_cfg
+            changed = True
+            self.setStyleSheet(theme.get_settings_style(dark_checked))
+            self._apply_dynamic_colors(dark_checked)
+            
+        sound_cfg = config.get("sound", {})
+        play_check = self._cb_play_checklist.isChecked()
+        play_notif = self._cb_play_notif.isChecked()
+        if (sound_cfg.get("play_checklist") != play_check or 
+            sound_cfg.get("play_notification") != play_notif or
+            sound_cfg.get("checklist_sound") != self._custom_checklist_path or
+            sound_cfg.get("notification_sound") != self._custom_notif_path):
+            sound_cfg["play_checklist"] = play_check
+            sound_cfg["play_notification"] = play_notif
+            sound_cfg["checklist_sound"] = self._custom_checklist_path
+            sound_cfg["notification_sound"] = self._custom_notif_path
+            config["sound"] = sound_cfg
             changed = True
             
         if selected_mode > 0 and config.get("mode") != selected_mode:
@@ -415,8 +577,20 @@ class SettingsWindow(QWidget):
         self._show_toast(t("msg_saved"))
 
     def _show_toast(self, message: str):
+        config = load_config()
+        sound_cfg = config.get("sound", {})
+        if sound_cfg.get("play_notification", True):
+            sound_path = sound_cfg.get("notification_sound", "")
+            if sound_path:
+                try:
+                    import winsound
+                    winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                except Exception as e:
+                    import logging
+                    logging.getLogger("mindfun").error("Failed to play sound: %s", e)
+                    
         toast = QLabel(message, self)
-        is_dark = load_config().get("dark_mode", True)
+        is_dark = config.get("dark_mode", True)
         if is_dark:
             toast.setStyleSheet("background-color: #b6f36d; color: #111111; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px;")
         else:
