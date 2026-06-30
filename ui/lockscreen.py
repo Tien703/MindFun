@@ -99,6 +99,7 @@ class LockScreen(QWidget):
         self._countdown_active = True
         self._is_closing = False
         self._drag_pos = None
+        self._global_elapsed_seconds = 0
 
         # Load tasks grouped by category
         _, self._checklist_groups = self._load_questions_and_tasks(config)
@@ -231,12 +232,9 @@ class LockScreen(QWidget):
         pal = theme.get_settings_palette(load_config().get("dark_mode", True))
         self._countdown_label.setStyleSheet(f"color: {pal['desc_color']}; font-size: 16px; font-weight: bold;")
 
-        if self._group_times:
-            self._progress.setMaxValue(self._group_times[self._current_group_index])
-        else:
-            self._progress.setMaxValue(self._total_seconds)
+        self._progress.setMaxValue(self._total_seconds)
             
-        self._progress.setValue(self._remaining)
+        self._progress.setValue(self._total_seconds - self._global_elapsed_seconds)
         self._countdown_label.setText(f"{self._remaining}s\n\n{t('waiting_prompt')}")
         
         if self._is_sleep_lock and not self._is_soft_sleep_lock:
@@ -584,6 +582,7 @@ class LockScreen(QWidget):
         # Countdown logic
         if self._countdown_active:
             self._remaining -= 1
+            self._global_elapsed_seconds += 1
 
             if self._remaining <= 0:
                 self._remaining = 0
@@ -601,7 +600,7 @@ class LockScreen(QWidget):
             else:
                 self._countdown_label.setText(f"{self._remaining}s\n\n{t('waiting_prompt')}")
             
-            self._progress.setValue(self._remaining)
+            self._progress.setValue(self._total_seconds - self._global_elapsed_seconds)
 
     def _get_game_hwnds(self) -> list:
         """Find all visible window handles for all processes matching game_exe."""
@@ -677,8 +676,7 @@ class LockScreen(QWidget):
             self._stacked_checklists.setCurrentIndex(self._current_group_index)
             
         self._remaining = self._group_times[self._current_group_index]
-        self._progress.setMaxValue(self._group_times[self._current_group_index])
-        self._progress.setValue(self._remaining)
+        self._progress.setValue(self._total_seconds - self._global_elapsed_seconds)
         
         # Determine if we should start countdown
         self._countdown_active = (self._remaining > 0)

@@ -274,6 +274,7 @@ class MindfunApp(QObject):
     def _show_play_time_now(self):
         from core.report_logger import get_daily_stats
         from datetime import datetime
+        from core.i18n import t
         today = datetime.now().strftime("%Y-%m-%d")
         stats = get_daily_stats()
         seconds = stats.get(today, {}).get("total_seconds", 0)

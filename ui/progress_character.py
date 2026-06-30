@@ -33,20 +33,24 @@ class ProgressCharacter(QWidget):
         # Set widget size based on the scaled pixmap size
         self.setFixedSize(self.base_pixmap.width(), self.base_pixmap.height() + 10) 
         
-        self.progress = 0.0 # 0.0 to 1.0 (1.0 = fully filled)
+        self.progress = 0.0 # Current visual progress
+        self.target_progress = 0.0 # Target progress to ease towards
         self.time_offset = 0.0
         self._max = 1
         
         # Timer for animation
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_animation)
-        self.timer.start(30) # ~33 fps
+        self.timer.start(16) # ~60 fps
         
     def set_progress(self, progress: float):
-        """Set progress from 0.0 to 1.0"""
-        self.progress = max(0.0, min(1.0, progress))
+        """Set target progress from 0.0 to 1.0"""
+        self.target_progress = max(0.0, min(1.0, progress))
         
     def setMaximum(self, maximum: int):
+        self._max = maximum
+        
+    def setMaxValue(self, maximum: int):
         self._max = maximum
         
     def setValue(self, value: int):
@@ -67,7 +71,14 @@ class ProgressCharacter(QWidget):
         pass
         
     def _update_animation(self):
-        self.time_offset += 0.1 # Speed of the wave
+        self.time_offset += 0.06 # Speed of the wave
+        
+        # Easing: approach target_progress smoothly
+        if abs(self.target_progress - self.progress) > 0.001:
+            self.progress += (self.target_progress - self.progress) * 0.05
+        else:
+            self.progress = self.target_progress
+            
         self.update()
 
     def paintEvent(self, event):
