@@ -2,7 +2,7 @@
 ; Builds MindfunSetup.exe from PyInstaller output
 
 #define MyAppName "Mindfun"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.2"
 #define MyAppPublisher "Mindfun Open Source"
 #define MyAppURL "https://github.com/mindfun"
 #define MyAppExeName "mindfun.exe"
@@ -16,7 +16,7 @@ AppPublisherURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-OutputBaseFilename=MindfunSetup
+OutputBaseFilename=MindfunSetup-v{#MyAppVersion}
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern

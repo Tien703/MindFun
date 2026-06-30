@@ -69,7 +69,8 @@ class MindfunApp(QObject):
             try:
                 from winotify import Notification
                 import os
-                icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets", "icon.ico"))
+                from core.utils import get_resource_path
+                icon_path = get_resource_path("assets/icon.ico")
                 toast = Notification(
                     app_id="Mindfun",
                     title="Mindfun",
@@ -169,9 +170,10 @@ class MindfunApp(QObject):
 
     def _find_icon(self) -> str:
         """Find the application icon file."""
+        from core.utils import get_resource_path
         candidates = [
-            os.path.join(os.path.dirname(__file__), "assets", "icon.ico"),
-            os.path.join(os.path.dirname(__file__), "assets", "icon.png"),
+            get_resource_path("assets/icon.ico"),
+            get_resource_path("assets/icon.png"),
         ]
         for path in candidates:
             if os.path.exists(path):
@@ -405,7 +407,8 @@ class MindfunApp(QObject):
             if sound_path:
                 try:
                     import winsound
-                    winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                    from core.utils import get_resource_path
+                    winsound.PlaySound(get_resource_path(sound_path), winsound.SND_FILENAME | winsound.SND_ASYNC)
                 except Exception as e:
                     logger.error("Failed to play sound: %s", e)
                     

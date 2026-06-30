@@ -30,6 +30,7 @@ from core.config_manager import (
     load_questions, save_questions,
     update_system_questions_language
 )
+from core.utils import get_resource_path
 from ui.game_manager_window import GameManagerWindow
 
 logger = logging.getLogger("mindfun.settings_window")
@@ -556,7 +557,8 @@ class SettingsWindow(QWidget):
             if sound_path:
                 try:
                     import winsound
-                    winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                    from core.utils import get_resource_path
+                    winsound.PlaySound(get_resource_path(sound_path), winsound.SND_FILENAME | winsound.SND_ASYNC)
                 except Exception as e:
                     import logging
                     logging.getLogger("mindfun").error("Failed to play sound: %s", e)

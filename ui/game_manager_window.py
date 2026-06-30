@@ -336,7 +336,8 @@ class GameManagerWindow(QDialog):
             if sound_path:
                 try:
                     import winsound
-                    winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                    from core.utils import get_resource_path
+                    winsound.PlaySound(get_resource_path(sound_path), winsound.SND_FILENAME | winsound.SND_ASYNC)
                 except Exception as e:
                     logger.error("Failed to play sound: %s", e)
                     

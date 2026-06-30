@@ -36,8 +36,8 @@ class OverlayBubble(QWidget):
         
         import os
         from PyQt5.QtGui import QPixmap
-        base_dir = os.path.join(os.path.dirname(__file__), "..", "assets", "sprites")
-        
+        from core.utils import get_resource_path
+        base_dir = get_resource_path("assets/sprites")
         def load_sprite(name):
             pix = QPixmap(os.path.join(base_dir, name))
             if not pix.isNull():

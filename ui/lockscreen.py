@@ -298,7 +298,15 @@ class LockScreen(QWidget):
                         f.setStrikeOut(True)
                         lbl.setFont(f)
                         lbl.setStyleSheet("color: #888888; font-size: 22px; background: transparent; border: none;")
-                    page_layout.addStretch()
+                        
+                    item_layout.addWidget(cb)
+                    item_layout.addWidget(lbl, 1)
+                    page_layout.addWidget(item_container)
+                    
+                    cb.clicked.connect(lambda checked, gid=group_id, iid=item_id, c=cb, l=lbl: self._on_task_checked(gid, iid, c, l))
+                    lbl.mousePressEvent = lambda event, c=cb: c.setChecked(not c.isChecked()) or c.clicked.emit(c.isChecked())
+                    
+                page_layout.addStretch()
                 self._stacked_checklists.addWidget(page)
                 
             scroll_area = QScrollArea()
@@ -471,7 +479,9 @@ class LockScreen(QWidget):
                 sound_path = sound_cfg.get("checklist_sound", "")
                 if sound_path:
                     try:
-                        winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                        from core.utils import get_resource_path
+                        real_path = get_resource_path(sound_path)
+                        winsound.PlaySound(real_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
                     except Exception as e:
                         logger.error(f"Failed to play sound: {e}")
         else:

@@ -4,14 +4,19 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QPixmap, QColor, QPainterPath
 from PyQt5.QtCore import QTimer, Qt
 
+from core.utils import get_resource_path
+
 class ProgressCharacter(QWidget):
     """
     A widget that displays a base character image and a 'fill' character image.
     The fill image is revealed from bottom to top using a wavy pattern (sine/cosine)
     to simulate liquid filling up based on progress.
     """
-    def __init__(self, base_image_path="assets/char_gray.png", fill_image_path="assets/char_green.png", parent=None):
+    def __init__(self, base_image_path=None, fill_image_path=None, parent=None):
         super().__init__(parent)
+        
+        base_image_path = base_image_path or get_resource_path("assets/char_gray.png")
+        fill_image_path = fill_image_path or get_resource_path("assets/char_green.png")
         
         # Load images
         self.base_pixmap = QPixmap(base_image_path)
@@ -49,7 +54,7 @@ class ProgressCharacter(QWidget):
         if self._is_red == is_red:
             return
         self._is_red = is_red
-        fill_path = "assets/char_red.png" if is_red else "assets/char_green.png"
+        fill_path = get_resource_path("assets/char_red.png" if is_red else "assets/char_green.png")
         self.fill_pixmap = QPixmap(fill_path)
         if self.fill_pixmap.isNull():
             self.fill_pixmap = QPixmap(150, 150)
