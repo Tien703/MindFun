@@ -215,11 +215,10 @@ def reset_daily_tasks():
         groups = groups.get("vi", []) + groups.get("en", [])
         
     for group in groups:
-        if group.get("is_checklist", False):
-            for item in group.get("items", []):
-                if item.get("done", False):
-                    item["done"] = False
-                    changed = True
+        for item in group.get("items", []):
+            if item.get("done", False):
+                item["done"] = False
+                changed = True
     if changed:
         save_questions(data)
 
